@@ -28,6 +28,7 @@
 
 import http.client
 import xml.dom
+from urllib.parse import urlparse
 
 get_resource_req = """<?xml version="1.0" encoding="UTF-8"?>
 <D:propfind xmlns:D="DAV:">
@@ -47,9 +48,36 @@ def getElms(elm, ns, name):
 def getElmContent(elm):
     return elm.childNodes[0].data
 
+def elmKey(elm):
+    return '{' + elm.namespaceURI + '} : {' + elm.localName + '}'
+
+def get_status(statusStr):
+    s = statusStr.split()
+    if len(s) == 3:
+        return int(s[1])
+    return 500
+
+class Prop:
+    def __init__(self, elm, status):
+        self.ns = elm.namespaceURI
+        self.name = elm.localName
+        self.status = status
+
 class Response:
     def __init__(self, href):
         self.href = href
+        self.properties = {}
+        self.error_properties = {}
+
+    def add_property(self, elm, status):
+        key = elmKey(elm)
+        prop = Prop(elm, status)
+
+        if status >= 200 and status <= 299:
+            self.properties[key] = prop
+        else:
+            self.error_properties[key] = prop
+
 
 
 class Multistatus:
@@ -67,13 +95,30 @@ class Multistatus:
                 raise Exception('multistatus: href elm count != 1')
             href_str = getElmContent(href[0])
 
-            # todo: check if href is a full url or just a path
-            #       use only the path
+            # if href is a full url, extract the path
+            if href_str.startswith('http://') or href_str.startswith('https://'):
+                url = urlparse(href_str)
+                href_str = url.path
+
             response = Response(href_str)
             self.response.update({response.href: response})
 
             propstat = getElms(elm, 'DAV:', 'propstat')
-            # todo: parse propstat
+            for ps in propstat:
+                statusElms = getElms(ps, 'DAV:', 'status')
+                statusNum = 500
+                if len(statusElms) == 1:
+                    statusStr = getElmContent(statusElms[0])
+                    statusNum = get_status(statusStr)
+
+                propElms = getElms(ps, 'DAV:', 'prop')
+                for propElm in propElms:
+                    props = propElm.childNodes
+                    for prop in props:
+                        if prop.nodeType == prop.ELEMENT_NODE:
+                            response.add_property(prop, statusNum)
+
+
 
 
 def resource_exists(http, path):
