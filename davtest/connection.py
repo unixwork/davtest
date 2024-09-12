@@ -68,12 +68,15 @@ class Http:
         return conn, hdr
 
     # return conn
-    def xmlRequest(self, method, path, xml, depth=None, ctype='application/xml'):
+    def xmlRequest(self, method, path, xml, depth=None, ctype='application/xml', hdrs=()):
         urlPath = path if path.startswith('http://') or path.startswith('https://') else concatPath(self.path, path)
 
         conn, hdr = self.connection(urlPath)
         if depth is not None:
             hdr.update({'Depth': depth})
+
+        for h in hdrs:
+            hdr.update(h)
 
         hdr.update({'Content-Type': ctype})
 
@@ -82,16 +85,16 @@ class Http:
         return conn
 
     # return HttpResponse
-    def httpXmlRequest(self, method, path, xml, depth=None, ctype='application/xml', retry=0):
+    def httpXmlRequest(self, method, path, xml, depth=None, ctype='application/xml', hdrs=(), retry=0):
         if retry > 10:
             raise Exception('xmlRequestResponse: too many requests')
 
-        conn = self.xmlRequest(method, path, xml, depth, ctype)
+        conn = self.xmlRequest(method, path, xml, depth, ctype, hdrs)
 
         response = conn.getresponse()
         if response.status == 301 or response.status == 302:
             location = response.getheader('Location')
-            return self.httpXmlRequest(method, location, xml, depth, ctype, retry+1)
+            return self.httpXmlRequest(method, location, xml, depth, ctype, hdrs, retry+1)
 
         return HttpResponse(response.status, response.headers, response.read())
 
