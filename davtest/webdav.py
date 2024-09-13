@@ -100,6 +100,10 @@ class Multistatus:
                 url = urlparse(href_str)
                 href_str = url.path
 
+            # remove trailing '/'
+            if len(href_str) > 0 and href_str[-1] == '/':
+                href_str = href_str[:-1]
+
             response = Response(href_str)
             self.response.update({response.href: response})
 
