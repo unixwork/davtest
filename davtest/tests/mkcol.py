@@ -34,7 +34,7 @@ class TestMkcol(davtest.test.WebdavTest):
         conn = self.http.simpleRequest('MKCOL', '/webdavtests/mkcol_test1/')
         res = conn.getresponse()
         if res.status != 201:
-            raise Exception('wrong status code: ' + str(res.status))
+            raise Exception(f'wrong status code: {res.status}')
 
         exists = davtest.webdav.resource_exists(self.http, '/webdavtests/mkcol_test1/')
         if not exists:
@@ -45,13 +45,13 @@ class TestMkcol(davtest.test.WebdavTest):
         # try to create it again and check if the status code is 405 (Method Not Allowed)
         res = self.http.doRequest('MKCOL', '/webdavtests/mkcol_test2')
         if res.status != 201:
-            raise Exception('wrong status code: ' + str(res.status))
+            raise Exception(f'wrong status code: {res.status}')
 
         res = self.http.doRequest('MKCOL', '/webdavtests/mkcol_test2')
         if res.status != 405:
-            raise Exception('status code 405 expected, status code: ' + str(res.status))
+            raise Exception(f'status code 405 expected, status code: {res.status}')
 
     def test_mkcol_missing_parent(self):
         res = self.http.doRequest('MKCOL', '/webdavtests/missing_collection/newcol/')
         if res.status != 409:
-            raise Exception('status code 409 expected, status code: ' + str(res.status))
+            raise Exception(f'status code 409 expected, status code: {res.status}')

@@ -33,15 +33,15 @@ class TestMkcol(davtest.test.WebdavTest):
     def test_delete_res(self):
         res = self.http.doRequest('PUT', '/webdavtests/res_delete1', 'testcontent')
         if res.status > 299:
-            raise Exception('cannot create test resource: ' + str(res.status))
+            raise Exception(f'cannot create test resource: {res.status}')
 
         res = self.http.doRequest('DELETE', '/webdavtests/res_delete1')
         if res.status < 200 or res.status > 299:
-            raise Exception('DELETE failed: ' + str(res.status))
+            raise Exception(f'DELETE failed: {res.status}')
 
         res = self.http.doRequest('GET', '/webdavtests/res_delete1')
         if res.status != 404:
-            raise Exception('resource still exists after DELETE, status: ' + str(res.status))
+            raise Exception(f'resource still exists after DELETE, status: {res.status}')
 
         exists = davtest.webdav.resource_exists(self.http, '/webdavtests/res_delete1')
         if exists:
@@ -57,24 +57,24 @@ class TestMkcol(davtest.test.WebdavTest):
 
         res = self.http.doRequest('MKCOL', '/webdavtests/col_delete2/')
         if res.status > 299:
-            raise Exception('cannot create test collection 1: ' + str(res.status))
+            raise Exception(f'cannot create test collection 1: {res.status}')
 
         res = self.http.doRequest('MKCOL', '/webdavtests/col_delete2/sub_col/')
         if res.status > 299:
-            raise Exception('cannot create test collection 2: ' + str(res.status))
+            raise Exception(f'cannot create test collection 2: {res.status}')
 
         res = self.http.doRequest('PUT', '/webdavtests/col_delete2/res1', 'testcontent 1')
         if res.status > 299:
-            raise Exception('cannot create test resource 1: ' + str(res.status))
+            raise Exception(f'cannot create test resource 1: {res.status}')
 
         res = self.http.doRequest('PUT', '/webdavtests/col_delete2/sub_col/res2', 'testcontent 2')
         if res.status > 299:
-            raise Exception('cannot create test resource 2: ' + str(res.status))
+            raise Exception(f'cannot create test resource 2: {res.status}')
 
         # delete collection
         res = self.http.doRequest('DELETE', '/webdavtests/col_delete2/')
         if res.status < 200 or res.status > 299:
-            raise Exception('DELETE failed: ' + str(res.status))
+            raise Exception(f'DELETE failed: ' + str(res.status))
 
         # check if all collections and resources are deleted
         exists = davtest.webdav.resource_exists(self.http, '/webdavtests/col_delete2/')
@@ -87,9 +87,9 @@ class TestMkcol(davtest.test.WebdavTest):
 
         res = self.http.doRequest('GET', '/webdavtests/col_delete2/res1')
         if res.status != 404:
-            raise Exception('resource 1 still exists after DELETE, status: ' + str(res.status))
+            raise Exception(f'resource 1 still exists after DELETE, status: {res.status}')
 
         res = self.http.doRequest('GET', '/webdavtests/col_delete2/sub_col/res2')
         if res.status != 404:
-            raise Exception('resource 2 still exists after DELETE, status: ' + str(res.status))
+            raise Exception(f'resource 2 still exists after DELETE, status: {res.status}')
 

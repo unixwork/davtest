@@ -33,11 +33,11 @@ class TestPut(davtest.test.WebdavTest):
     def test_put(self):
         res = self.http.doRequest('PUT', '/webdavtests/res_put1', 'testcontent 1')
         if res.status > 299:
-            raise Exception('cannot create test resource: ' + str(res.status))
+            raise Exception(f'cannot create test resource: {res.status}')
 
         res = self.http.doRequest('GET', '/webdavtests/res_put1')
         if res.status != 200:
-            raise Exception('GET failed: ' + str(res.status))
+            raise Exception(f'GET failed: {res.status}')
 
         if res.body != b'testcontent 1':
             raise Exception('wrong content')
@@ -45,11 +45,11 @@ class TestPut(davtest.test.WebdavTest):
         # PUT again
         res = self.http.doRequest('PUT', '/webdavtests/res_put1', 'testcontent 2')
         if res.status > 299:
-            raise Exception('cannot put test resource: ' + str(res.status))
+            raise Exception(f'cannot put test resource: {res.status}')
 
         res = self.http.doRequest('GET', '/webdavtests/res_put1')
         if res.status != 200:
-            raise Exception('GET 2 failed: ' + str(res.status))
+            raise Exception(f'GET 2 failed: {res.status}')
 
         if res.body != b'testcontent 2':
             raise Exception('wrong content after second PUT')
