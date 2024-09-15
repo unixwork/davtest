@@ -41,22 +41,27 @@ propfind1 = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 class TestPropfind(davtest.test.WebdavTest):
+    def create_testdata(self, colname, num_res):
+        path = f'/webdavtests/{colname}/'
+        res = self.http.doRequest('MKCOL', path)
+        if res.status != 201:
+            raise Exception(f'cannot create test collection: {res.status}')
+
+        for i in range(num_res):
+            res_path = f'{path}res{i}'
+            res = self.http.doRequest('PUT', res_path, f'testcontent {i}')
+            if res.status > 299:
+                raise Exception(f'cannot create test resource {1}: {res.status}')
+
     def test_propfind_depth0(self):
         # create some test data
         #
         # /propfind_depth0/
         # /propfind_depth0/res1
-
-        res = self.http.doRequest('MKCOL', '/webdavtests/propfind_depth0/')
-        if res.status != 201:
-            raise Exception(f'cannot create test collection: {res.status}')
-
-        res = self.http.doRequest('PUT', '/webdavtests/propfind_depth0/res1', 'testcontent 1')
-        if res.status > 299:
-            raise Exception(f'cannot create test resource 1: {res.status}')
+        self.create_testdata('propfind_depth0', 1)
 
         # do tests
-        for path in ('/webdavtests/propfind_depth0/', '/webdavtests/propfind_depth0', '/webdavtests/propfind_depth0/res1'):
+        for path in ('/webdavtests/propfind_depth0/', '/webdavtests/propfind_depth0', '/webdavtests/propfind_depth0/res0'):
             res = self.http.httpXmlRequest('PROPFIND', path, propfind1, 0)
             if res.status != 207:
                 raise Exception(f'path: {path} : wrong status code: {res.status}')
@@ -68,6 +73,23 @@ class TestPropfind(davtest.test.WebdavTest):
             if len(ms.response) != 1:
                 raise Exception(f'path: {path} : wrong number of response elements')
 
+    def test_propfind_depth1(self):
+        # create some test data
+        #
+        # /propfind_depth1/
+        # /propfind_depth1/res1
+        # /propfind_depth1/res2
+        # /propfind_depth1/res3
+        self.create_testdata('propfind_depth1', 3)
 
+        # do tests
+        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_depth1', propfind1, 1)
+        if res.status != 207:
+            raise Exception(f'wrong status code: {res.status}')
 
+        if len(res.body) == 0:
+            raise Exception(f'no propfind response body')
 
+        ms = davtest.webdav.Multistatus(res.body)
+        if len(ms.response) < 4:
+            raise Exception(f'wrong number of response elements')
