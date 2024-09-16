@@ -93,3 +93,34 @@ class TestPropfind(davtest.test.WebdavTest):
         ms = davtest.webdav.Multistatus(res.body)
         if len(ms.response) < 4:
             raise Exception(f'wrong number of response elements')
+
+    def test_resource_type(self):
+        self.create_testdata('propfind_resourcetype', 1)
+
+        # do tests
+        # check if a collection resource has a resourcetype element
+        # that contains a DAV:collection element
+
+        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_resourcetype', propfind1, 0)
+        if res.status != 207:
+            raise Exception(f'wrong status code: {res.status}')
+
+        if len(res.body) == 0:
+            raise Exception(f'no propfind response body')
+
+        ms = davtest.webdav.Multistatus(res.body)
+        for key, collection in ms.response.items():
+            # only one element: the propfind_resourcetype collection
+            resource_type = collection.get_property('DAV:', 'resourcetype')
+
+            if resource_type is None:
+                raise Exception('no resourcetype property')
+
+            if resource_type.status > 299:
+                raise Exception(f'wrong resourcetype status code: {resource_type.status}')
+
+            elm = resource_type.elm
+            iscollection = False
+            collection_node = davtest.webdav.getElms(elm, 'DAV:', 'collection')
+            if collection_node is None:
+                raise Exception('missing <DAV:collection> element')

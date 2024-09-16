@@ -51,6 +51,9 @@ def getElmContent(elm):
 def elmKey(elm):
     return '{' + elm.namespaceURI + '} : {' + elm.localName + '}'
 
+def propKey(ns, name):
+    return '{' + ns + '} : {' + name + '}'
+
 def get_status(statusStr):
     s = statusStr.split()
     if len(s) == 3:
@@ -62,6 +65,7 @@ class Prop:
         self.ns = elm.namespaceURI
         self.name = elm.localName
         self.status = status
+        self.elm = elm
 
 class Response:
     def __init__(self, href):
@@ -77,6 +81,10 @@ class Response:
             self.properties[key] = prop
         else:
             self.error_properties[key] = prop
+
+    def get_property(self, ns, name):
+        key = propKey(ns, name)
+        return self.properties.get(key)
 
 
 
