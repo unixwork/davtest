@@ -33,9 +33,22 @@ import davtest.webdav
 propfind1 = """<?xml version="1.0" encoding="UTF-8"?>
 <D:propfind xmlns:D="DAV:">
     <D:prop>
+        <D:getlastmodified/>
         <D:creationdate/>
         <D:getetag/>
         <D:resourcetype/>
+    </D:prop>
+</D:propfind>
+"""
+
+propfind2_404 = """<?xml version="1.0" encoding="UTF-8"?>
+<D:propfind xmlns:D="DAV:">
+    <D:prop>
+        <D:getlastmodified/>
+        <D:creationdate/>
+        <D:getetag/>
+        <D:resourcetype/>
+        <D:nonexistingproperty/>
     </D:prop>
 </D:propfind>
 """
@@ -93,6 +106,33 @@ class TestPropfind(davtest.test.WebdavTest):
         ms = davtest.webdav.Multistatus(res.body)
         if len(ms.response) < 4:
             raise Exception(f'wrong number of response elements')
+
+    def test_property_status(self):
+        self.create_testdata('propfind_status', 1)
+
+        # do tests
+        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_status', propfind2_404, 1)
+        if res.status != 207:
+            raise Exception(f'wrong status code: {res.status}')
+
+        if len(res.body) == 0:
+            raise Exception(f'no propfind response body')
+
+        ms = davtest.webdav.Multistatus(res.body)
+        for key, response in ms.response.items():
+            lastmodified = response.get_property('DAV:', 'getlastmodified')
+            if lastmodified is None:
+                raise Exception('no getlastmodified property element')
+
+            if lastmodified.status != 200:
+                raise Exception(f'wrong getlastmodified status code: {lastmodified.status}')
+
+            nonexistingproperty = response.get_err_property('DAV:', 'nonexistingproperty')
+            if nonexistingproperty is None:
+                raise Exception('no nonexistingproperty property element')
+
+            if nonexistingproperty.status != 404:
+                raise Exception(f'wrong nonexistingproperty status code: {lastmodified.status}')
 
     def test_resource_type(self):
         self.create_testdata('propfind_resourcetype', 1)

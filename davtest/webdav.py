@@ -56,7 +56,7 @@ def propKey(ns, name):
 
 def get_status(statusStr):
     s = statusStr.split()
-    if len(s) == 3:
+    if len(s) >= 3:
         return int(s[1])
     return 500
 
@@ -85,6 +85,10 @@ class Response:
     def get_property(self, ns, name):
         key = propKey(ns, name)
         return self.properties.get(key)
+
+    def get_err_property(self, ns, name):
+        key = propKey(ns, name)
+        return self.error_properties.get(key)
 
 
 
