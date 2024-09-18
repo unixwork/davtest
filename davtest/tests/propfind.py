@@ -53,6 +53,12 @@ propfind2_404 = """<?xml version="1.0" encoding="UTF-8"?>
 </D:propfind>
 """
 
+propfind3_allprop = """<?xml version="1.0" encoding="UTF-8"?>
+<D:propfind xmlns:D="DAV:">
+    <D:allprop/>
+</D:propfind>
+"""
+
 class TestPropfind(davtest.test.WebdavTest):
     def create_testdata(self, colname, num_res):
         path = f'/webdavtests/{colname}/'
@@ -164,3 +170,33 @@ class TestPropfind(davtest.test.WebdavTest):
             collection_node = davtest.webdav.getElms(elm, 'DAV:', 'collection')
             if collection_node is None:
                 raise Exception('missing <DAV:collection> element')
+
+    def test_allprop_simple(self):
+        self.create_testdata('propfind_allprop_simple', 1)
+
+        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_allprop_simple', propfind3_allprop, 1)
+        if res.status != 207:
+            raise Exception(f'wrong status code: {res.status}')
+
+        if len(res.body) == 0:
+            raise Exception(f'no propfind response body')
+
+        ms = davtest.webdav.Multistatus(res.body)
+        for key, response in ms.response.items():
+            # at least some properties should be there
+            # getetag, getlastmodified, creationdate
+            # collection: resourcetype
+            # resource: getcontentlength
+            lastmodified = response.get_property('DAV:', 'getlastmodified')
+            creationdate = response.get_property('DAV:', 'creationdate')
+            etag = response.get_property('DAV:', 'getetag')
+            resourcetype = response.get_property('DAV:', 'resourcetype')
+            contentlength = response.get_property('DAV', 'getcontentlength')
+
+            if lastmodified is None or etag is None or creationdate is None:
+                raise Exception('missing properties in allprop response')
+            if resourcetype is None and contentlength is None:
+                raise Exception('missing properties in allprop response')
+
+
+

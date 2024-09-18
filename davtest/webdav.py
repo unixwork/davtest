@@ -66,6 +66,7 @@ class Prop:
         self.name = elm.localName
         self.status = status
         self.elm = elm
+    
 
 class Response:
     def __init__(self, href):
