@@ -198,5 +198,13 @@ class TestPropfind(davtest.test.WebdavTest):
             if resourcetype is None and contentlength is None:
                 raise Exception('missing properties in allprop response')
 
+            # test for property values
+            lastmodified_elm = lastmodified.elm
+            creationdate_elm = creationdate.elm
+            etag_elm = etag.elm
+            if lastmodified_elm is None or creationdate_elm is None or etag_elm is None:
+                raise Exception('missing property values')
 
+            if lastmodified_elm.childNodes is None or creationdate_elm.childNodes is None or etag_elm.childNodes is None:
+                raise Exception('missing property values')
 
