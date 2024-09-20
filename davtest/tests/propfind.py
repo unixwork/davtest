@@ -58,6 +58,11 @@ propfind3_allprop = """<?xml version="1.0" encoding="UTF-8"?>
     <D:allprop/>
 </D:propfind>
 """
+propfind4_propname = """<?xml version="1.0" encoding="UTF-8"?>
+<D:propfind xmlns:D="DAV:">
+    <D:propname/>
+</D:propfind>
+"""
 
 class TestPropfind(davtest.test.WebdavTest):
     def create_testdata(self, colname, num_res):
@@ -208,3 +213,39 @@ class TestPropfind(davtest.test.WebdavTest):
             if lastmodified_elm.childNodes is None or creationdate_elm.childNodes is None or etag_elm.childNodes is None:
                 raise Exception('missing property values')
 
+    def test_propname_simple(self):
+        self.create_testdata('propfind_propname_simple', 1)
+
+        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_propname_simple', propfind4_propname, 1)
+        if res.status != 207:
+            raise Exception(f'wrong status code: {res.status}')
+
+        if len(res.body) == 0:
+            raise Exception(f'no propfind response body')
+
+        ms = davtest.webdav.Multistatus(res.body)
+        for key, response in ms.response.items():
+            # at least some properties should be there
+            # getetag, getlastmodified, creationdate
+            # collection: resourcetype
+            # resource: getcontentlength
+            lastmodified = response.get_property('DAV:', 'getlastmodified')
+            creationdate = response.get_property('DAV:', 'creationdate')
+            etag = response.get_property('DAV:', 'getetag')
+            resourcetype = response.get_property('DAV:', 'resourcetype')
+            contentlength = response.get_property('DAV', 'getcontentlength')
+
+            if lastmodified is None or etag is None or creationdate is None:
+                raise Exception('missing properties in allprop response')
+            if resourcetype is None and contentlength is None:
+                raise Exception('missing properties in allprop response')
+
+            # test for property values (should not exist)
+            lastmodified_elm = lastmodified.elm
+            creationdate_elm = creationdate.elm
+            etag_elm = etag.elm
+            if lastmodified_elm is None or creationdate_elm is None or etag_elm is None:
+                raise Exception('missing property values')
+
+            if len(lastmodified_elm.childNodes) + len(creationdate_elm.childNodes) + len(etag_elm.childNodes) != 0:
+                raise Exception('missing property values')
