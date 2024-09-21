@@ -210,7 +210,7 @@ class TestPropfind(davtest.test.WebdavTest):
             if lastmodified_elm is None or creationdate_elm is None or etag_elm is None:
                 raise Exception('missing property values')
 
-            if lastmodified_elm.childNodes is None or creationdate_elm.childNodes is None or etag_elm.childNodes is None:
+            if len(lastmodified_elm.childNodes) == 0 or len(creationdate_elm.childNodes) == 0 or len(etag_elm.childNodes) == 0:
                 raise Exception('missing property values')
 
     def test_propname_simple(self):
