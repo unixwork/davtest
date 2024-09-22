@@ -73,3 +73,15 @@ class WebdavTest:
     def __init_subclass__(cls, *args, **kwargs):
         test_classes.append(cls)
 
+    def create_testdata(self, colname, num_res):
+        path = f'/webdavtests/{colname}/'
+        res = self.http.doRequest('MKCOL', path)
+        if res.status != 201:
+            raise Exception(f'cannot create test collection: {res.status}')
+
+        for i in range(num_res):
+            res_path = f'{path}res{i}'
+            res = self.http.doRequest('PUT', res_path, f'testcontent {i}')
+            if res.status > 299:
+                raise Exception(f'cannot create test resource {1}: {res.status}')
+
