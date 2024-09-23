@@ -89,9 +89,9 @@ class TestPropfind(davtest.test.WebdavTest):
         # create some test data
         #
         # /propfind_depth1/
+        # /propfind_depth1/res0
         # /propfind_depth1/res1
         # /propfind_depth1/res2
-        # /propfind_depth1/res3
         self.create_testdata('propfind_depth1', 3)
 
         # do tests

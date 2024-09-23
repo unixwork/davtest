@@ -29,6 +29,36 @@
 import davtest.test
 import davtest.webdav
 
+proppatch1 = """<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:">
+    <D:set>
+        <D:prop>
+            <D:myprop>testvalue1</D:myprop>
+        </D:prop>
+    </D:set>
+</D:propertyupdate>
+"""
+
 class TestProppatch(davtest.test.WebdavTest):
-    def test_proppatch(self):
-        a=0 # todo
+    def test_proppatch_set_response(self):
+        self.create_testdata('proppatch_set1', 1)
+
+        res = self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_set1/res0', proppatch1)
+        if res.status != 207:
+            raise Exception(f'wrong status code: {res.status}')
+
+        if len(res.body) == 0:
+            raise Exception(f'no propfind response body')
+
+        ms = davtest.webdav.Multistatus(res.body)
+        if len(ms.response) != 1:
+            raise Exception(f'wrong number of response elements')
+
+        response = next(iter(ms.response.values()))
+        prop = response.get_property('DAV:', 'myprop')
+        errprop = response.get_property('DAV:', 'myprop')
+
+        if prop is None and errprop is None:
+            raise Exception('missing property in response')
+
+
