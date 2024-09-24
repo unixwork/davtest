@@ -29,6 +29,8 @@
 import davtest.test
 import davtest.webdav
 
+ns = "https://unixwork.de/davtest/"
+
 proppatch1 = """<?xml version="1.0" encoding="utf-8" ?>
 <D:propertyupdate xmlns:D="DAV:">
     <D:set>
@@ -39,6 +41,25 @@ proppatch1 = """<?xml version="1.0" encoding="utf-8" ?>
 </D:propertyupdate>
 """
 
+proppatch2 = """<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:">
+    <D:set>
+        <D:prop>
+            <Z:myprop xmlns:Z="https://unixwork.de/davtest/">testvalue1</Z:myprop>
+        </D:prop>
+    </D:set>
+</D:propertyupdate>
+"""
+
+propfind_z_myprop = """<?xml version="1.0" encoding="UTF-8"?>
+<D:propfind xmlns:D="DAV:">
+    <D:prop>
+        <Z:myprop xmlns:Z="https://unixwork.de/davtest/"/>
+    </D:prop>
+</D:propfind>
+"""
+
+
 class TestProppatch(davtest.test.WebdavTest):
     def test_proppatch_set_response(self):
         self.create_testdata('proppatch_set1', 1)
@@ -48,7 +69,7 @@ class TestProppatch(davtest.test.WebdavTest):
             raise Exception(f'wrong status code: {res.status}')
 
         if len(res.body) == 0:
-            raise Exception(f'no propfind response body')
+            raise Exception(f'no proppatch response body')
 
         ms = davtest.webdav.Multistatus(res.body)
         if len(ms.response) != 1:
@@ -60,5 +81,52 @@ class TestProppatch(davtest.test.WebdavTest):
 
         if prop is None and errprop is None:
             raise Exception('missing property in response')
+
+    def test_proppatch_set_deadproperty(self):
+        self.create_testdata('proppatch_set2', 1)
+
+        res = self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_set2/res0', proppatch2)
+        if res.status != 207:
+            raise Exception(f'wrong status code: {res.status}')
+
+        if len(res.body) == 0:
+            raise Exception(f'no propfind response body')
+
+        ms = davtest.webdav.Multistatus(res.body)
+        if len(ms.response) != 1:
+            raise Exception(f'wrong number of response elements')
+
+        response = next(iter(ms.response.values()))
+        prop = response.get_property(ns, 'myprop')
+
+        if prop is None:
+            raise Exception('missing property in response')
+
+        if prop.status != 200:
+            raise Exception('wrong property status code')
+
+        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/proppatch_set2/res0', propfind_z_myprop, 0)
+        if res.status != 207:
+            raise Exception(f'propfind: wrong status code: {res.status}')
+
+        if len(res.body) == 0:
+            raise Exception(f'no propfind response body')
+
+        ms = davtest.webdav.Multistatus(res.body)
+        if len(ms.response) != 1:
+            raise Exception(f'wrong number of response elements in propfind request')
+
+        response = next(iter(ms.response.values()))
+        prop = response.get_property(ns, 'myprop')
+
+        if prop is None:
+            raise Exception('missing property in propfind response')
+
+        content = davtest.webdav.getElmContent(prop.elm)
+        if content is None:
+            raise Exception('missing property content')
+
+        if str(content) != 'testvalue1':
+            raise Exception('wrong property content')
 
 
