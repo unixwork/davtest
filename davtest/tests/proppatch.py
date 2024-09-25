@@ -51,6 +51,16 @@ proppatch2 = """<?xml version="1.0" encoding="utf-8" ?>
 </D:propertyupdate>
 """
 
+proppatch3_remove = """<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:">
+    <D:remove>
+        <D:prop>
+            <Z:myprop xmlns:Z="https://unixwork.de/davtest/" />
+        </D:prop>
+    </D:remove>
+</D:propertyupdate>
+"""
+
 propfind_z_myprop = """<?xml version="1.0" encoding="UTF-8"?>
 <D:propfind xmlns:D="DAV:">
     <D:prop>
@@ -90,7 +100,7 @@ class TestProppatch(davtest.test.WebdavTest):
             raise Exception(f'wrong status code: {res.status}')
 
         if len(res.body) == 0:
-            raise Exception(f'no propfind response body')
+            raise Exception(f'no proppatch response body')
 
         ms = davtest.webdav.Multistatus(res.body)
         if len(ms.response) != 1:
@@ -129,4 +139,48 @@ class TestProppatch(davtest.test.WebdavTest):
         if str(content) != 'testvalue1':
             raise Exception('wrong property content')
 
+    def test_proppatch_remove_deadproperty(self):
+        self.create_testdata('proppatch_remove1', 1)
 
+        res = self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_remove1/res0', proppatch2)
+        ms = davtest.webdav.Multistatus(res.body)
+        response = next(iter(ms.response.values()))
+        prop = response.get_property(ns, 'myprop')
+
+        if prop is None:
+            raise Exception('missing property in response')
+        if prop.status != 200:
+            raise Exception('wrong property status code')
+
+        # test remove
+        res = self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_remove1/res0', proppatch3_remove)
+        if res.status != 207:
+            raise Exception(f'proppatch remove: wrong status code: {res.status}')
+
+        ms = davtest.webdav.Multistatus(res.body)
+        if len(ms.response) != 1:
+            raise Exception(f'wrong number of response elements in proppatch request')
+
+        response = next(iter(ms.response.values()))
+        prop = response.get_property(ns, 'myprop')
+        if prop.status != 200:
+            raise Exception('prop remove: wrong status code')
+
+        # check with propfind, if the resource was deleted
+        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/proppatch_remove1/res0', propfind_z_myprop, 0)
+        if res.status != 207:
+            raise Exception(f'propfind: wrong status code: {res.status}')
+
+        if len(res.body) == 0:
+            raise Exception(f'no propfind response body')
+
+        ms = davtest.webdav.Multistatus(res.body)
+        if len(ms.response) != 1:
+            raise Exception(f'wrong number of response elements in propfind request')
+
+        response = next(iter(ms.response.values()))
+        propfind_prop = response.get_err_property(ns, 'myprop')
+        if propfind_prop is None:
+            raise Exception('no error prop')
+        if propfind_prop.status != 404:
+            raise Exception('property not removed')
