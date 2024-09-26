@@ -29,6 +29,8 @@
 import davtest.test
 import davtest.webdav
 
+from davtest.webdav import assertMultistatusResponse
+
 ns = "https://unixwork.de/davtest/"
 
 proppatch1 = """<?xml version="1.0" encoding="utf-8" ?>
@@ -74,16 +76,7 @@ class TestProppatch(davtest.test.WebdavTest):
     def test_proppatch_set_response(self):
         self.create_testdata('proppatch_set1', 1)
 
-        res = self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_set1/res0', proppatch1)
-        if res.status != 207:
-            raise Exception(f'wrong status code: {res.status}')
-
-        if len(res.body) == 0:
-            raise Exception(f'no proppatch response body')
-
-        ms = davtest.webdav.Multistatus(res.body)
-        if len(ms.response) != 1:
-            raise Exception(f'wrong number of response elements')
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_set1/res0', proppatch1), numResponses=1)
 
         response = next(iter(ms.response.values()))
         prop = response.get_property('DAV:', 'myprop')
@@ -95,16 +88,7 @@ class TestProppatch(davtest.test.WebdavTest):
     def test_proppatch_set_deadproperty(self):
         self.create_testdata('proppatch_set2', 1)
 
-        res = self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_set2/res0', proppatch2)
-        if res.status != 207:
-            raise Exception(f'wrong status code: {res.status}')
-
-        if len(res.body) == 0:
-            raise Exception(f'no proppatch response body')
-
-        ms = davtest.webdav.Multistatus(res.body)
-        if len(ms.response) != 1:
-            raise Exception(f'wrong number of response elements')
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_set2/res0', proppatch2), numResponses=1)
 
         response = next(iter(ms.response.values()))
         prop = response.get_property(ns, 'myprop')
@@ -115,17 +99,7 @@ class TestProppatch(davtest.test.WebdavTest):
         if prop.status != 200:
             raise Exception('wrong property status code')
 
-        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/proppatch_set2/res0', propfind_z_myprop, 0)
-        if res.status != 207:
-            raise Exception(f'propfind: wrong status code: {res.status}')
-
-        if len(res.body) == 0:
-            raise Exception(f'no propfind response body')
-
-        ms = davtest.webdav.Multistatus(res.body)
-        if len(ms.response) != 1:
-            raise Exception(f'wrong number of response elements in propfind request')
-
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/proppatch_set2/res0', propfind_z_myprop, 0), numResponses=1)
         response = next(iter(ms.response.values()))
         prop = response.get_property(ns, 'myprop')
 
@@ -142,8 +116,7 @@ class TestProppatch(davtest.test.WebdavTest):
     def test_proppatch_remove_deadproperty(self):
         self.create_testdata('proppatch_remove1', 1)
 
-        res = self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_remove1/res0', proppatch2)
-        ms = davtest.webdav.Multistatus(res.body)
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_remove1/res0', proppatch2))
         response = next(iter(ms.response.values()))
         prop = response.get_property(ns, 'myprop')
 
@@ -153,13 +126,7 @@ class TestProppatch(davtest.test.WebdavTest):
             raise Exception('wrong property status code')
 
         # test remove
-        res = self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_remove1/res0', proppatch3_remove)
-        if res.status != 207:
-            raise Exception(f'proppatch remove: wrong status code: {res.status}')
-
-        ms = davtest.webdav.Multistatus(res.body)
-        if len(ms.response) != 1:
-            raise Exception(f'wrong number of response elements in proppatch request')
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_remove1/res0', proppatch3_remove), numResponses=1)
 
         response = next(iter(ms.response.values()))
         prop = response.get_property(ns, 'myprop')
@@ -167,16 +134,7 @@ class TestProppatch(davtest.test.WebdavTest):
             raise Exception('prop remove: wrong status code')
 
         # check with propfind, if the resource was deleted
-        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/proppatch_remove1/res0', propfind_z_myprop, 0)
-        if res.status != 207:
-            raise Exception(f'propfind: wrong status code: {res.status}')
-
-        if len(res.body) == 0:
-            raise Exception(f'no propfind response body')
-
-        ms = davtest.webdav.Multistatus(res.body)
-        if len(ms.response) != 1:
-            raise Exception(f'wrong number of response elements in propfind request')
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/proppatch_remove1/res0', propfind_z_myprop, 0), numResponses=1)
 
         response = next(iter(ms.response.values()))
         propfind_prop = response.get_err_property(ns, 'myprop')

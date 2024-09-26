@@ -30,6 +30,8 @@ import http.client
 import xml.dom
 from urllib.parse import urlparse
 
+import davtest.connection
+
 get_resource_req = """<?xml version="1.0" encoding="UTF-8"?>
 <D:propfind xmlns:D="DAV:">
     <D:prop>
@@ -41,6 +43,22 @@ get_resource_req = """<?xml version="1.0" encoding="UTF-8"?>
     </D:prop>
 </D:propfind>
 """
+
+def assertMultistatusResponse(httpResponse, numResponses=None):
+    if httpResponse.status != 207:
+        raise Exception(f'http response: expected 207 multistatus: {httpResponse.status}')
+
+    if len(httpResponse.body) == 0:
+        raise Exception('http response: expected response body')
+
+    ms = davtest.webdav.Multistatus(httpResponse.body)
+
+    if numResponses is not None:
+        if len(ms.response) != numResponses:
+            raise Exception(f'multistatus: wrong number of response elements: {len(ms.response)}')
+
+    return ms
+
 
 def getElms(elm, ns, name):
     return [e for e in elm.childNodes if e.nodeType == e.ELEMENT_NODE and e.namespaceURI == ns and e.localName == name]
