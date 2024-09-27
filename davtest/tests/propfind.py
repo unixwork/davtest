@@ -30,6 +30,8 @@
 import davtest.test
 import davtest.webdav
 
+from davtest.webdav import assertMultistatusResponse
+
 propfind1 = """<?xml version="1.0" encoding="UTF-8"?>
 <D:propfind xmlns:D="DAV:">
     <D:prop>
@@ -74,16 +76,7 @@ class TestPropfind(davtest.test.WebdavTest):
 
         # do tests
         for path in ('/webdavtests/propfind_depth0/', '/webdavtests/propfind_depth0', '/webdavtests/propfind_depth0/res0'):
-            res = self.http.httpXmlRequest('PROPFIND', path, propfind1, 0)
-            if res.status != 207:
-                raise Exception(f'path: {path} : wrong status code: {res.status}')
-
-            if len(res.body) == 0:
-                raise Exception(f'path: {path} : no propfind response body')
-
-            ms = davtest.webdav.Multistatus(res.body)
-            if len(ms.response) != 1:
-                raise Exception(f'path: {path} : wrong number of response elements')
+            ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', path, propfind1, 0), numResponses=1)
 
     def test_propfind_depth1(self):
         # create some test data
@@ -95,29 +88,13 @@ class TestPropfind(davtest.test.WebdavTest):
         self.create_testdata('propfind_depth1', 3)
 
         # do tests
-        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_depth1', propfind1, 1)
-        if res.status != 207:
-            raise Exception(f'wrong status code: {res.status}')
-
-        if len(res.body) == 0:
-            raise Exception(f'no propfind response body')
-
-        ms = davtest.webdav.Multistatus(res.body)
-        if len(ms.response) < 4:
-            raise Exception(f'wrong number of response elements')
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_depth1', propfind1, 1), numResponses=4)
 
     def test_property_status(self):
         self.create_testdata('propfind_status', 1)
 
         # do tests
-        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_status', propfind2_404, 1)
-        if res.status != 207:
-            raise Exception(f'wrong status code: {res.status}')
-
-        if len(res.body) == 0:
-            raise Exception(f'no propfind response body')
-
-        ms = davtest.webdav.Multistatus(res.body)
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_status', propfind2_404, 1))
         for key, response in ms.response.items():
             lastmodified = response.get_property('DAV:', 'getlastmodified')
             if lastmodified is None:
@@ -140,14 +117,7 @@ class TestPropfind(davtest.test.WebdavTest):
         # check if a collection resource has a resourcetype element
         # that contains a DAV:collection element
 
-        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_resourcetype', propfind1, 0)
-        if res.status != 207:
-            raise Exception(f'wrong status code: {res.status}')
-
-        if len(res.body) == 0:
-            raise Exception(f'no propfind response body')
-
-        ms = davtest.webdav.Multistatus(res.body)
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_resourcetype', propfind1, 0))
         for key, collection in ms.response.items():
             # only one element: the propfind_resourcetype collection
             resource_type = collection.get_property('DAV:', 'resourcetype')
@@ -167,14 +137,7 @@ class TestPropfind(davtest.test.WebdavTest):
     def test_allprop_simple(self):
         self.create_testdata('propfind_allprop_simple', 1)
 
-        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_allprop_simple', propfind3_allprop, 1)
-        if res.status != 207:
-            raise Exception(f'wrong status code: {res.status}')
-
-        if len(res.body) == 0:
-            raise Exception(f'no propfind response body')
-
-        ms = davtest.webdav.Multistatus(res.body)
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_allprop_simple', propfind3_allprop, 1))
         for key, response in ms.response.items():
             # at least some properties should be there
             # getetag, getlastmodified, creationdate
@@ -204,14 +167,7 @@ class TestPropfind(davtest.test.WebdavTest):
     def test_propname_simple(self):
         self.create_testdata('propfind_propname_simple', 1)
 
-        res = self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_propname_simple', propfind4_propname, 1)
-        if res.status != 207:
-            raise Exception(f'wrong status code: {res.status}')
-
-        if len(res.body) == 0:
-            raise Exception(f'no propfind response body')
-
-        ms = davtest.webdav.Multistatus(res.body)
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_propname_simple', propfind4_propname, 1))
         for key, response in ms.response.items():
             # at least some properties should be there
             # getetag, getlastmodified, creationdate
