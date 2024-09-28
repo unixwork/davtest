@@ -114,6 +114,7 @@ class Response:
 class Multistatus:
     def __init__(self, multistatusStr):
         self.doc = xml.dom.minidom.parseString(multistatusStr)
+        self.body = multistatusStr
         self.response = {}
         self.parse()
 

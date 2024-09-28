@@ -63,6 +63,17 @@ proppatch3_remove = """<?xml version="1.0" encoding="utf-8" ?>
 </D:propertyupdate>
 """
 
+proppatch4_fail1 = """<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:">
+    <D:set>
+        <D:prop>
+            <Z:myprop xmlns:Z="https://unixwork.de/davtest/">testvalue1</Z:myprop>
+            <D:getetag>newetag</D:getetag><!-- illegal -->
+        </D:prop>
+    </D:set>
+</D:propertyupdate>
+"""
+
 propfind_z_myprop = """<?xml version="1.0" encoding="UTF-8"?>
 <D:propfind xmlns:D="DAV:">
     <D:prop>
@@ -70,6 +81,7 @@ propfind_z_myprop = """<?xml version="1.0" encoding="UTF-8"?>
     </D:prop>
 </D:propfind>
 """
+
 
 
 class TestProppatch(davtest.test.WebdavTest):
@@ -142,3 +154,19 @@ class TestProppatch(davtest.test.WebdavTest):
             raise Exception('no error prop')
         if propfind_prop.status != 404:
             raise Exception('property not removed')
+
+    def test_proppatch_failed_dependency(self):
+        self.create_testdata('proppatch_fail1', 1)
+
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_fail1/res0', proppatch4_fail1), numResponses=1)
+        response = next(iter(ms.response.values()))
+        myprop = response.get_err_property(ns, 'myprop')
+        failprop = response.get_err_property('DAV:', 'getetag')
+
+        if myprop is None or failprop is None:
+            raise Exception('expected failed property')
+
+        if myprop.status != 424:
+            raise Exception('wrong status code for failed dependency')
+
+
