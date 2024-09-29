@@ -74,6 +74,31 @@ proppatch4_fail1 = """<?xml version="1.0" encoding="utf-8" ?>
 </D:propertyupdate>
 """
 
+proppatch5_rm_unknown = """<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:">
+    <D:remove>
+        <D:prop>
+            <Z:unknown_prop xmlns:Z="https://unixwork.de/davtest/" />
+        </D:prop>
+    </D:remove>
+</D:propertyupdate>
+"""
+
+proppatch5_rm_unknown_set = """<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:">
+    <D:remove>
+        <D:prop>
+            <Z:unknown_prop xmlns:Z="https://unixwork.de/davtest/" />
+        </D:prop>
+    </D:remove>
+    <D:set>
+        <D:prop>
+            <Z:myprop xmlns:Z="https://unixwork.de/davtest/">testvalue1</Z:myprop>
+        </D:prop>
+    </D:set>
+</D:propertyupdate>
+"""
+
 propfind_z_myprop = """<?xml version="1.0" encoding="UTF-8"?>
 <D:propfind xmlns:D="DAV:">
     <D:prop>
@@ -169,4 +194,26 @@ class TestProppatch(davtest.test.WebdavTest):
         if myprop.status != 424:
             raise Exception('wrong status code for failed dependency')
 
+    def test_proppatch_remove_unknown_prop(self):
+        self.create_testdata('proppatch_rm_unknown', 2)
+
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_rm_unknown/res0', proppatch5_rm_unknown),
+            numResponses=1)
+        response = next(iter(ms.response.values()))
+        unknown = response.get_property(ns, 'unknown_prop')
+        if unknown is None:
+            raise Exception('missing property in response')
+
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_rm_unknown/res1', proppatch5_rm_unknown_set),
+            numResponses=1)
+        response = next(iter(ms.response.values()))
+        unknown = response.get_property(ns, 'unknown_prop')
+        myprop = response.get_property(ns, 'myprop')
+        if unknown is None or myprop is None:
+            raise Exception('missing property in response')
+
+        if unknown.status != 200 or myprop.status != 200:
+            raise Exception('wrong property status code')
 
