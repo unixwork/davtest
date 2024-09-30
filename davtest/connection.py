@@ -100,10 +100,13 @@ class Http:
 
 
     # return conn
-    def simpleRequest(self, method, path, content = None):
+    def simpleRequest(self, method, path, content = None, hdrs=()):
         urlPath = path if path.startswith('http://') or path.startswith('https://') else concatPath(self.path, path)
 
         conn, hdr = self.connection(urlPath)
+        for h in hdrs:
+            hdr.update(h)
+
         if content is None:
             conn.request(method, urlPath, headers=hdr)
         else:
@@ -112,15 +115,15 @@ class Http:
         return conn
 
     # return HttpResponse
-    def doRequest(self, method, path, content = None, retry = 0):
+    def doRequest(self, method, path, content = None, retry = 0, hdrs=()):
         if retry > 10:
             raise Exception('request: too many requests')
 
-        conn = self.simpleRequest(method, path, content)
+        conn = self.simpleRequest(method, path, content, hdrs)
         response = conn.getresponse()
         if response.status == 301 or response.status == 302:
             location = response.getheader('Location')
-            return self.doRequest(method, location, content, retry + 1)
+            return self.doRequest(method, location, content, retry + 1, hdrs)
 
         return HttpResponse(response.status, response.headers, response.read())
 
