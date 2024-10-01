@@ -67,6 +67,9 @@ class Http:
         hdr = {'Authorization': self.basicauth}
         return conn, hdr
 
+    def get_uri(self, path):
+        return self.scheme + '://' + concatPath(self.host, self.getpath(path))
+
     # return conn
     def xmlRequest(self, method, path, xml, depth=None, ctype='application/xml', hdrs=()):
         urlPath = path if path.startswith('http://') or path.startswith('https://') else concatPath(self.path, path)
@@ -100,12 +103,11 @@ class Http:
 
 
     # return conn
-    def simpleRequest(self, method, path, content = None, hdrs=()):
+    def simpleRequest(self, method, path, content = None, hdrs={}):
         urlPath = path if path.startswith('http://') or path.startswith('https://') else concatPath(self.path, path)
 
         conn, hdr = self.connection(urlPath)
-        for h in hdrs:
-            hdr.update(h)
+        hdr.update(hdrs)
 
         if content is None:
             conn.request(method, urlPath, headers=hdr)
@@ -115,7 +117,7 @@ class Http:
         return conn
 
     # return HttpResponse
-    def doRequest(self, method, path, content = None, retry = 0, hdrs=()):
+    def doRequest(self, method, path, content = None, retry = 0, hdrs={}):
         if retry > 10:
             raise Exception('request: too many requests')
 
