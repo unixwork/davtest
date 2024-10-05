@@ -3,6 +3,26 @@ import davtest.webdav
 
 from davtest.webdav import assertMultistatusResponse
 
+ns = "https://unixwork.de/davtest/"
+
+proppatch_z_myprop = """<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:">
+    <D:set>
+        <D:prop>
+            <Z:myprop xmlns:Z="https://unixwork.de/davtest/">testvalue1</Z:myprop>
+        </D:prop>
+    </D:set>
+</D:propertyupdate>
+"""
+
+propfind_z_myprop = """<?xml version="1.0" encoding="UTF-8"?>
+<D:propfind xmlns:D="DAV:">
+    <D:prop>
+        <Z:myprop xmlns:Z="https://unixwork.de/davtest/"/>
+    </D:prop>
+</D:propfind>
+"""
+
 class TestCopy(davtest.test.WebdavTest):
     def test_copy_resource(self):
         self.create_testdata('copy1', 1)
@@ -104,4 +124,32 @@ class TestCopy(davtest.test.WebdavTest):
             raise Exception(f'GET failed: {res.status}')
 
         if res.body != b'target testcontent 1':
+            raise Exception('wrong content')
+
+    def test_copy_prop(self):
+        self.create_testdata('copy6', 1)
+
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPPATCH', '/webdavtests/copy6/res0', proppatch_z_myprop), numResponses=1)
+        response = next(iter(ms.response.values()))
+        prop = response.get_property(ns, 'myprop')
+        if prop is None or prop.status != 200:
+            raise Exception('missing myprop')
+
+        destination = self.http.get_uri('/webdavtests/copy6/res0_new')
+        res = self.http.doRequest('COPY', '/webdavtests/copy6/res0', hdrs={'Destination': destination})
+
+        if res.status > 299:
+            raise Exception('copy failed')
+
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPFIND', '/webdavtests/copy6/res0_new', propfind_z_myprop, 0),
+            numResponses=1)
+        response = next(iter(ms.response.values()))
+        prop_new = response.get_property(ns, 'myprop')
+        if prop_new is None or prop_new.status != 200:
+            raise Exception('missing property after copy')
+
+        content = davtest.webdav.getElmContent(prop_new.elm)
+        if content is None or str(content) != 'testvalue1':
             raise Exception('wrong content')
