@@ -2,6 +2,7 @@ import davtest.test
 import davtest.webdav
 
 from davtest.webdav import assertMultistatusResponse
+from davtest.webdav import assertProperty
 
 ns = "https://unixwork.de/davtest/"
 
@@ -126,30 +127,24 @@ class TestCopy(davtest.test.WebdavTest):
         if res.body != b'target testcontent 1':
             raise Exception('wrong content')
 
-    def test_copy_prop(self):
+    def test_copy_deadprop(self):
         self.create_testdata('copy6', 1)
 
+        # add a dead property, that should be copied later
         ms = assertMultistatusResponse(
             self.http.httpXmlRequest('PROPPATCH', '/webdavtests/copy6/res0', proppatch_z_myprop), numResponses=1)
-        response = next(iter(ms.response.values()))
-        prop = response.get_property(ns, 'myprop')
-        if prop is None or prop.status != 200:
-            raise Exception('missing myprop')
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
 
+        # do copy
         destination = self.http.get_uri('/webdavtests/copy6/res0_new')
         res = self.http.doRequest('COPY', '/webdavtests/copy6/res0', hdrs={'Destination': destination})
-
         if res.status > 299:
             raise Exception('copy failed')
 
+        # check property
         ms = assertMultistatusResponse(
             self.http.httpXmlRequest('PROPFIND', '/webdavtests/copy6/res0_new', propfind_z_myprop, 0),
             numResponses=1)
-        response = next(iter(ms.response.values()))
-        prop_new = response.get_property(ns, 'myprop')
-        if prop_new is None or prop_new.status != 200:
-            raise Exception('missing property after copy')
+        assertProperty(ms.get_first_response(), ns, 'myprop', content='testvalue1', status=200)
 
-        content = davtest.webdav.getElmContent(prop_new.elm)
-        if content is None or str(content) != 'testvalue1':
-            raise Exception('wrong content')
+

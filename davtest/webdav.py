@@ -59,6 +59,24 @@ def assertMultistatusResponse(httpResponse, numResponses=None):
 
     return ms
 
+def assertProperty(response, ns, propname, content=None, status=None):
+    prop = response.get_prop(ns, propname)
+    if prop is None:
+        raise Exception(f'missing property {propname}')
+
+    if status is not None and prop.status != status:
+        raise Exception(f'wrong property status: {prop.status}')
+
+    if content is not None:
+        propcontent = getElmContent(prop.elm)
+        if propcontent is None:
+            raise Exception('missing property content')
+
+        if str(propcontent) != content:
+            raise Exception('wrong property content')
+
+
+
 
 def getElms(elm, ns, name):
     return [e for e in elm.childNodes if e.nodeType == e.ELEMENT_NODE and e.namespaceURI == ns and e.localName == name]
@@ -109,6 +127,12 @@ class Response:
         key = propKey(ns, name)
         return self.error_properties.get(key)
 
+    def get_prop(self, ns, name):
+        p = self.get_property(ns, name)
+        if p is None:
+            p = self.get_err_property(ns, name)
+        return p
+
 
 
 class Multistatus:
@@ -153,6 +177,9 @@ class Multistatus:
                     for prop in props:
                         if prop.nodeType == prop.ELEMENT_NODE:
                             response.add_property(prop, statusNum)
+
+    def get_first_response(self):
+        return next(iter(self.response.values()))
 
 
 
