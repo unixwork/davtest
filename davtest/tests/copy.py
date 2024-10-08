@@ -147,4 +147,30 @@ class TestCopy(davtest.test.WebdavTest):
             numResponses=1)
         assertProperty(ms.get_first_response(), ns, 'myprop', content='testvalue1', status=200)
 
+    def test_copy_depth0(self):
+        self.create_testdata('copy7', 1)
+
+        # add a dead property to the collection, that should be copied later
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPPATCH', '/webdavtests/copy7/', proppatch_z_myprop), numResponses=1)
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
+
+        # do copy
+        destination = self.http.get_uri('/webdavtests/copy7_new/')
+        res = self.http.doRequest('COPY', '/webdavtests/copy7/', hdrs={'Destination': destination, 'Depth': '0'})
+        if res.status > 299:
+            raise Exception('copy failed')
+
+        # check property
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPFIND', '/webdavtests/copy7_new/', propfind_z_myprop, 0),
+            numResponses=1)
+        assertProperty(ms.get_first_response(), ns, 'myprop', content='testvalue1', status=200)
+
+        # check if copy7/res0 was copied
+        # it shouldn't exist, because of Depth: 0
+        exists = davtest.webdav.resource_exists(self.http, '/webdavtests/copy7_new/res0')
+        if exists:
+            raise Exception('child resource should not be copied')
+
 
