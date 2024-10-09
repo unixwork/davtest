@@ -30,6 +30,7 @@ import davtest.test
 import davtest.webdav
 
 from davtest.webdav import assertMultistatusResponse
+from davtest.webdav import assertProperty
 
 ns = "https://unixwork.de/davtest/"
 
@@ -115,7 +116,7 @@ class TestProppatch(davtest.test.WebdavTest):
 
         ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_set1/res0', proppatch1), numResponses=1)
 
-        response = next(iter(ms.response.values()))
+        response = ms.get_first_response()
         prop = response.get_property('DAV:', 'myprop')
         errprop = response.get_property('DAV:', 'myprop')
 
@@ -127,64 +128,30 @@ class TestProppatch(davtest.test.WebdavTest):
 
         ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_set2/res0', proppatch2), numResponses=1)
 
-        response = next(iter(ms.response.values()))
-        prop = response.get_property(ns, 'myprop')
-
-        if prop is None:
-            raise Exception('missing property in response')
-
-        if prop.status != 200:
-            raise Exception('wrong property status code')
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
 
         ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/proppatch_set2/res0', propfind_z_myprop, 0), numResponses=1)
-        response = next(iter(ms.response.values()))
-        prop = response.get_property(ns, 'myprop')
-
-        if prop is None:
-            raise Exception('missing property in propfind response')
-
-        content = davtest.webdav.getElmContent(prop.elm)
-        if content is None:
-            raise Exception('missing property content')
-
-        if str(content) != 'testvalue1':
-            raise Exception('wrong property content')
+        assertProperty(ms.get_first_response(), ns, 'myprop', content='testvalue1', status=200)
 
     def test_proppatch_remove_deadproperty(self):
         self.create_testdata('proppatch_remove1', 1)
 
         ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_remove1/res0', proppatch2))
-        response = next(iter(ms.response.values()))
-        prop = response.get_property(ns, 'myprop')
-
-        if prop is None:
-            raise Exception('missing property in response')
-        if prop.status != 200:
-            raise Exception('wrong property status code')
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
 
         # test remove
         ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_remove1/res0', proppatch3_remove), numResponses=1)
-
-        response = next(iter(ms.response.values()))
-        prop = response.get_property(ns, 'myprop')
-        if prop.status != 200:
-            raise Exception('prop remove: wrong status code')
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
 
         # check with propfind, if the resource was deleted
         ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/proppatch_remove1/res0', propfind_z_myprop, 0), numResponses=1)
-
-        response = next(iter(ms.response.values()))
-        propfind_prop = response.get_err_property(ns, 'myprop')
-        if propfind_prop is None:
-            raise Exception('no error prop')
-        if propfind_prop.status != 404:
-            raise Exception('property not removed')
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=404)
 
     def test_proppatch_failed_dependency(self):
         self.create_testdata('proppatch_fail1', 1)
 
         ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_fail1/res0', proppatch4_fail1), numResponses=1)
-        response = next(iter(ms.response.values()))
+        response = ms.get_first_response()
         myprop = response.get_err_property(ns, 'myprop')
         failprop = response.get_err_property('DAV:', 'getetag')
 
@@ -200,7 +167,7 @@ class TestProppatch(davtest.test.WebdavTest):
         ms = assertMultistatusResponse(
             self.http.httpXmlRequest('PROPPATCH', '/webdavtests/proppatch_rm_unknown/res0', proppatch5_rm_unknown),
             numResponses=1)
-        response = next(iter(ms.response.values()))
+        response = ms.get_first_response()
         unknown = response.get_property(ns, 'unknown_prop')
         if unknown is None:
             raise Exception('missing property in response')
