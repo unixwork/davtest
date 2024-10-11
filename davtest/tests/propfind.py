@@ -31,6 +31,7 @@ import davtest.test
 import davtest.webdav
 
 from davtest.webdav import assertMultistatusResponse
+from davtest.webdav import assertProperty
 
 propfind1 = """<?xml version="1.0" encoding="UTF-8"?>
 <D:propfind xmlns:D="DAV:">
@@ -96,19 +97,8 @@ class TestPropfind(davtest.test.WebdavTest):
         # do tests
         ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/propfind_status', propfind2_404, 1))
         for key, response in ms.response.items():
-            lastmodified = response.get_property('DAV:', 'getlastmodified')
-            if lastmodified is None:
-                raise Exception('no getlastmodified property element')
-
-            if lastmodified.status != 200:
-                raise Exception(f'wrong getlastmodified status code: {lastmodified.status}')
-
-            nonexistingproperty = response.get_err_property('DAV:', 'nonexistingproperty')
-            if nonexistingproperty is None:
-                raise Exception('no nonexistingproperty property element')
-
-            if nonexistingproperty.status != 404:
-                raise Exception(f'wrong nonexistingproperty status code: {lastmodified.status}')
+            assertProperty(response, 'DAV:', 'getlastmodified', status=200)
+            assertProperty(response, 'DAV:', 'nonexistingproperty', status=404)
 
     def test_resource_type(self):
         self.create_testdata('propfind_resourcetype', 1)
@@ -121,12 +111,7 @@ class TestPropfind(davtest.test.WebdavTest):
         for key, collection in ms.response.items():
             # only one element: the propfind_resourcetype collection
             resource_type = collection.get_property('DAV:', 'resourcetype')
-
-            if resource_type is None:
-                raise Exception('no resourcetype property')
-
-            if resource_type.status > 299:
-                raise Exception(f'wrong resourcetype status code: {resource_type.status}')
+            assertProperty(collection, 'DAV:', 'resourcetype', status=200)
 
             elm = resource_type.elm
             iscollection = False
@@ -149,8 +134,9 @@ class TestPropfind(davtest.test.WebdavTest):
             resourcetype = response.get_property('DAV:', 'resourcetype')
             contentlength = response.get_property('DAV', 'getcontentlength')
 
-            if lastmodified is None or etag is None or creationdate is None:
-                raise Exception('missing properties in allprop response')
+            assertProperty(response, 'DAV:', 'getlastmodified', status=200)
+            assertProperty(response, 'DAV:', 'creationdate', status=200)
+            assertProperty(response, 'DAV:', 'getetag', status=200)
             if resourcetype is None and contentlength is None:
                 raise Exception('missing properties in allprop response')
 
@@ -179,8 +165,9 @@ class TestPropfind(davtest.test.WebdavTest):
             resourcetype = response.get_property('DAV:', 'resourcetype')
             contentlength = response.get_property('DAV', 'getcontentlength')
 
-            if lastmodified is None or etag is None or creationdate is None:
-                raise Exception('missing properties in allprop response')
+            assertProperty(response, 'DAV:', 'getlastmodified', status=200)
+            assertProperty(response, 'DAV:', 'creationdate', status=200)
+            assertProperty(response, 'DAV:', 'getetag', status=200)
             if resourcetype is None and contentlength is None:
                 raise Exception('missing properties in allprop response')
 

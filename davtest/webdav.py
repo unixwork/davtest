@@ -82,7 +82,7 @@ def getElms(elm, ns, name):
     return [e for e in elm.childNodes if e.nodeType == e.ELEMENT_NODE and e.namespaceURI == ns and e.localName == name]
 
 def getElmContent(elm):
-    return elm.childNodes[0].data
+    return elm.childNodes[0].data # todo: check childNodes
 
 def elmKey(elm):
     return '{' + elm.namespaceURI + '} : {' + elm.localName + '}'
