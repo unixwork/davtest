@@ -40,6 +40,19 @@ class TestMove(davtest.test.WebdavTest):
         if davtest.webdav.resource_exists(self.http, '/webdavtests/move1/res0'):
             raise Exception('target resource still exists after MOVE')
 
+    def test_move_collection(self):
+        self.create_testdata('move2', 1)
 
+        destination = self.http.get_uri('/webdavtests/move2_new/')
+        res = self.http.doRequest('MOVE', '/webdavtests/move2/', hdrs={'Destination': destination})
+
+        if res.status > 299:
+            raise Exception(f'MOVE status code: {res.status}')
+
+        if not davtest.webdav.resource_exists(self.http, '/webdavtests/move2_new/res0'):
+            raise Exception('resource does not exist')
+
+        if davtest.webdav.resource_exists(self.http, '/webdavtests/move2/'):
+            raise Exception('target collection still exists after MOVE')
 
 
