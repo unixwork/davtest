@@ -55,4 +55,23 @@ class TestMove(davtest.test.WebdavTest):
         if davtest.webdav.resource_exists(self.http, '/webdavtests/move2/'):
             raise Exception('target collection still exists after MOVE')
 
+    def test_move_properties(self):
+        self.create_testdata('move3', 1)
+
+        # add a dead property, that should be copied later
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPPATCH', '/webdavtests/move3/res0', proppatch_z_myprop), numResponses=1)
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
+
+        # do copy
+        destination = self.http.get_uri('/webdavtests/move3/res0_new')
+        res = self.http.doRequest('MOVE', '/webdavtests/move3/res0', hdrs={'Destination': destination})
+        if res.status > 299:
+            raise Exception('copy failed')
+
+        # check property
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPFIND', '/webdavtests/move3/res0_new', propfind_z_myprop, 0),
+            numResponses=1)
+        assertProperty(ms.get_first_response(), ns, 'myprop', content='testvalue1', status=200)
 
