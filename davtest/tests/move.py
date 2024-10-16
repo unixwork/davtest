@@ -88,7 +88,7 @@ class TestMove(davtest.test.WebdavTest):
             raise Exception(f'cannot create test resource: {res.status}')
 
         destination = self.http.get_uri('/webdavtests/move4_target/')
-        res = self.http.doRequest('MOVE', '/webdavtests/copy4/', hdrs={'Destination': destination, 'Overwrite': 'T'})
+        res = self.http.doRequest('MOVE', '/webdavtests/move4/', hdrs={'Destination': destination, 'Overwrite': 'T'})
 
         if res.status > 299:
             raise Exception(f'MOVE status code: {res.status}')
@@ -97,11 +97,20 @@ class TestMove(davtest.test.WebdavTest):
         if exists:
             raise Exception('res1 should not exist')
 
-        res = self.http.doRequest('GET', '/webdavtests/move4/res0')
+        res = self.http.doRequest('GET', '/webdavtests/move4_target/res0')
         if res.status != 200:
             raise Exception(f'GET failed: {res.status}')
 
         if res.body != b'move4':
             raise Exception('wrong content')
 
+    def test_move_no_overwrite(self):
+        self.create_testdata('move5', 1)
+        self.create_testdata('move5_target', 2)
+
+        destination = self.http.get_uri('/webdavtests/move5_target/')
+        res = self.http.doRequest('MOVE', '/webdavtests/move5/', hdrs={'Destination': destination, 'Overwrite': 'F'})
+
+        if res.status != 412:
+            raise Exception(f'MOVE expected to fail, status code: {res.status}')
 
