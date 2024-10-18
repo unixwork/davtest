@@ -124,7 +124,7 @@ class TestMove(davtest.test.WebdavTest):
             raise Exception(f'MOVE status code: {res.status}')
 
 
-    def test_move_status201(self):
+    def test_move_status204(self):
         self.create_testdata('move6', 2)
 
         destination = self.http.get_uri('/webdavtests/move6/res1')
