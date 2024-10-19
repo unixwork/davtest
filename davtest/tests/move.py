@@ -125,10 +125,10 @@ class TestMove(davtest.test.WebdavTest):
 
 
     def test_move_status204(self):
-        self.create_testdata('move6', 2)
+        self.create_testdata('move7', 2)
 
-        destination = self.http.get_uri('/webdavtests/move6/res1')
-        res = self.http.doRequest('MOVE', '/webdavtests/move6/res0', hdrs={'Destination': destination})
+        destination = self.http.get_uri('/webdavtests/move7/res1')
+        res = self.http.doRequest('MOVE', '/webdavtests/move7/res0', hdrs={'Destination': destination})
 
         if res.status != 204:
             raise Exception(f'MOVE status code: {res.status}')

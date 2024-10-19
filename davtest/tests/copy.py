@@ -173,4 +173,23 @@ class TestCopy(davtest.test.WebdavTest):
         if exists:
             raise Exception('child resource should not be copied')
 
+    def test_copy_status201(self):
+        self.create_testdata('copy8', 1)
+
+        destination = self.http.get_uri('/webdavtests/copy8/res0_new')
+        res = self.http.doRequest('COPY', '/webdavtests/copy8/res0', hdrs={'Destination': destination})
+
+        if res.status != 201:
+            raise Exception(f'COPY status code: {res.status}')
+
+
+    def test_copy_status204(self):
+        self.create_testdata('copy9', 2)
+
+        destination = self.http.get_uri('/webdavtests/copy9/res1')
+        res = self.http.doRequest('COPY', '/webdavtests/copy9/res0', hdrs={'Destination': destination})
+
+        if res.status != 204:
+            raise Exception(f'COPY status code: {res.status}')
+
 
