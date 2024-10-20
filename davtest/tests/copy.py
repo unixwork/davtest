@@ -192,4 +192,11 @@ class TestCopy(davtest.test.WebdavTest):
         if res.status != 204:
             raise Exception(f'COPY status code: {res.status}')
 
+    def test_copy_status409(self):
+        self.create_testdata('copy10', 1)
 
+        destination = self.http.get_uri('/webdavtests/copy10/sub/res0')
+        res = self.http.doRequest('MOVE', '/webdavtests/copy10/res0', hdrs={'Destination': destination})
+
+        if res.status != 409:
+            raise Exception(f'COPY status code: {res.status}')
