@@ -132,6 +132,7 @@ class TestMove(davtest.test.WebdavTest):
 
         if res.status != 204:
             raise Exception(f'MOVE status code: {res.status}')
+
     def test_move_status409(self):
         self.create_testdata('move8', 1)
 
@@ -141,3 +142,11 @@ class TestMove(davtest.test.WebdavTest):
         if res.status != 409:
             raise Exception(f'MOVE status code: {res.status}')
 
+    def test_move_status412(self):
+        self.create_testdata('move9', 2)
+
+        destination = self.http.get_uri('/webdavtests/move9/res1')
+        res = self.http.doRequest('MOVE', '/webdavtests/move9/res0', hdrs={'Destination': destination, 'Overwrite': 'F'})
+
+        if res.status != 412:
+            raise Exception(f'MOVE status code: {res.status}')
