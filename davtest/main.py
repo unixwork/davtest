@@ -41,7 +41,7 @@ config = dict()
 
 # print help text
 def helptext():
-    print("TODO: helptext")
+    print("Usage: davtest [-h] [-u <user>] [-p <password>] [-c <configfile>] <url>")
 
 def main():
     # load config parameters from a file
@@ -90,15 +90,6 @@ def main():
     # run test suite
     davtest.test.dav_testsuite_run(config)
 
-# test
-'''
-class MyTest(test.WebdavTest):
-    def __init__(self):
-        print("init MyTest")
-
-    def test_method0(self):
-        print("test0")
-'''
 
 
 if __name__ == "__main__":
