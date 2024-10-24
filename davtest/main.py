@@ -85,6 +85,7 @@ def main():
 
     if err:
         print("Abort.")
+        helptext()
         exit(-1)
 
     # run test suite
