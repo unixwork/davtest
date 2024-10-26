@@ -196,3 +196,36 @@ def resource_exists(http, path):
         return True
 
     return False
+
+class Lock:
+    def Lock(self):
+        a = 0
+
+class LockDiscovery:
+    def __init__(self, lockdiscoveryStr):
+        self.doc = xml.dom.minidom.parseString(lockdiscoveryStr)
+        self.body = lockdiscoveryStr
+        self.locks = []
+        self.parse()
+
+    def parse(self):
+        elms = self.doc.documentElement.getElementsByTagNameNS('DAV:', 'lockdiscovery')
+        for elm in elms:
+            activelocks = getElms(elm, 'DAV:', 'activelock')
+            for lock in activelocks:
+                locktoken = getElms(lock,'DAV:', 'locktoken')
+                if len(locktoken) != 1:
+                    raise Exception('locktoken elm count != 1')
+
+                href = getElms(locktoken[0], 'DAV:', 'href')
+                if len(href) != 1:
+                    raise Exception('locktoken  href elm count != 1')
+
+                locktoken_value = getElmContent(href[0])
+
+                activelock = Lock()
+                activelock.locktoken = locktoken_value
+
+                self.locks.append(activelock)
+
+
