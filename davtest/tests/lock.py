@@ -69,4 +69,26 @@ class TestLock(davtest.test.WebdavTest):
         if res.status >= 299:
             raise Exception(f'UNLCOK failed: {res.status}')
 
+    def test_lock_create_res(self):
+        self.create_testdata('lock4', 1)
 
+        res = self.http.httpXmlRequest('LOCK', '/webdavtests/lock4/res_new', lock_request1, hdrs={'Timeout': 'Second-20'})
+        lock_status = res.status
+        # check lock_status later
+
+        lockdiscovery = davtest.webdav.LockDiscovery(res.body)
+        locktoken = lockdiscovery.locks[0].locktoken
+
+        if not davtest.webdav.resource_exists(self.http, '/webdavtests/lock4/res_new'):
+            raise Exception('resource does not exist')
+
+        res = self.http.httpXmlRequest('UNLOCK', '/webdavtests/lock4/res_new', lock_request1,
+                                       hdrs={'Lock-Token': f'<{locktoken}>'})
+        if res.status >= 299:
+            raise Exception(f'UNLCOK failed: {res.status}')
+
+        if not davtest.webdav.resource_exists(self.http, '/webdavtests/lock4/res_new'):
+            raise Exception('resource does not exist after UNLOCK')
+
+        if lock_status != 201:
+            raise Exception(f'wrong LOCK status code: {lock_status}')
