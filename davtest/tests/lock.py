@@ -24,7 +24,7 @@ class TestLock(davtest.test.WebdavTest):
         lockdiscovery = davtest.webdav.LockDiscovery(res.body)
         locktoken = lockdiscovery.locks[0].locktoken
 
-        res = self.http.httpXmlRequest('UNLOCK', '/webdavtests/lock1/res0', lock_request1, hdrs={'Lock-Token': f'<{locktoken}>'})
+        res = self.http.doRequest('UNLOCK', '/webdavtests/lock1/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
 
         # usually UNLOCK should respond with 204, however the spec doesn't
         # say that 200 (with response body) is forbidden
@@ -46,7 +46,7 @@ class TestLock(davtest.test.WebdavTest):
         if res.status > 299:
             raise Exception(f'PUT failed: {res.status}')
 
-        res = self.http.httpXmlRequest('UNLOCK', '/webdavtests/lock2/res0', lock_request1, hdrs={'Lock-Token': f'<{locktoken}>'})
+        res = self.http.doRequest('UNLOCK', '/webdavtests/lock2/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
         if res.status >= 299:
             raise Exception(f'UNLCOK failed: {res.status}')
 
@@ -65,7 +65,7 @@ class TestLock(davtest.test.WebdavTest):
         if res.status < 400:
             raise Exception(f'expected PUT to fail: {res.status}')
 
-        res = self.http.httpXmlRequest('UNLOCK', '/webdavtests/lock3/res0', lock_request1, hdrs={'Lock-Token': f'<{locktoken}>'})
+        res = self.http.doRequest('UNLOCK', '/webdavtests/lock3/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
         if res.status >= 299:
             raise Exception(f'UNLCOK failed: {res.status}')
 
@@ -82,8 +82,7 @@ class TestLock(davtest.test.WebdavTest):
         if not davtest.webdav.resource_exists(self.http, '/webdavtests/lock4/res_new'):
             raise Exception('resource does not exist')
 
-        res = self.http.httpXmlRequest('UNLOCK', '/webdavtests/lock4/res_new', lock_request1,
-                                       hdrs={'Lock-Token': f'<{locktoken}>'})
+        res = self.http.doRequest('UNLOCK', '/webdavtests/lock4/res_new', hdrs={'Lock-Token': f'<{locktoken}>'})
         if res.status >= 299:
             raise Exception(f'UNLCOK failed: {res.status}')
 
@@ -92,3 +91,6 @@ class TestLock(davtest.test.WebdavTest):
 
         if lock_status != 201:
             raise Exception(f'wrong LOCK status code: {lock_status}')
+
+
+
