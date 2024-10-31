@@ -92,5 +92,25 @@ class TestLock(davtest.test.WebdavTest):
         if lock_status != 201:
             raise Exception(f'wrong LOCK status code: {lock_status}')
 
+    def test_lock_refresh(self):
+        self.create_testdata('lock5', 1)
 
+        res = self.http.httpXmlRequest('LOCK', '/webdavtests/lock5/res0', lock_request1, hdrs={'Timeout': 'Second-10'})
 
+        if res.status != 200:
+            raise Exception(f'LOCK failed: {res.status}')
+
+        lockdiscovery = davtest.webdav.LockDiscovery(res.body)
+        locktoken = lockdiscovery.locks[0].locktoken
+
+        res = self.http.doRequest('LOCK', '/webdavtests/lock5/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
+
+        if res.status != 200:
+            raise Exception(f'refresh LOCK failed: {res.status}')
+
+        newlockdiscovery = davtest.webdav.LockDiscovery(res.body)
+        newlocktoken = lockdiscovery.locks[0].locktoken
+
+        res = self.http.doRequest('UNLOCK', '/webdavtests/lock5/res0', hdrs={'Lock-Token': f'<{newlocktoken}>'})
+        if res.status >= 299:
+            raise Exception(f'UNLCOK failed: {res.status}')
