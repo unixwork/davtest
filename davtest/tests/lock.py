@@ -44,6 +44,7 @@ class TestLock(davtest.test.WebdavTest):
 
         res = self.http.doRequest('PUT', '/webdavtests/lock2/res0', 'new content', hdrs={'If': f'(<{locktoken}>)'})
         if res.status > 299:
+            self.http.doRequest('UNLOCK', '/webdavtests/lock3/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
             raise Exception(f'PUT failed: {res.status}')
 
         res = self.http.doRequest('UNLOCK', '/webdavtests/lock2/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
@@ -63,6 +64,7 @@ class TestLock(davtest.test.WebdavTest):
 
         res = self.http.doRequest('PUT', '/webdavtests/lock3/res0', 'new content')
         if res.status < 400:
+            self.http.doRequest('UNLOCK', '/webdavtests/lock3/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
             raise Exception(f'expected PUT to fail: {res.status}')
 
         res = self.http.doRequest('UNLOCK', '/webdavtests/lock3/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
@@ -104,8 +106,8 @@ class TestLock(davtest.test.WebdavTest):
         locktoken = lockdiscovery.locks[0].locktoken
 
         res = self.http.doRequest('LOCK', '/webdavtests/lock5/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
-
         if res.status != 200:
+            self.http.doRequest('UNLOCK', '/webdavtests/lock5/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
             raise Exception(f'refresh LOCK failed: {res.status}')
 
         newlockdiscovery = davtest.webdav.LockDiscovery(res.body)
