@@ -182,6 +182,20 @@ class Multistatus:
         return next(iter(self.response.values()))
 
 
+class Lock:
+    def __init__(self, http=None, url=None, lockdiscovery_str=None):
+        self.http = http
+        self.url = url
+        self.lockdiscovery_str = lockdiscovery_str
+
+    def __enter__(self):
+        self.lockdiscovery = davtest.webdav.LockDiscovery(self.lockdiscovery_str)
+        self.locktoken = self.lockdiscovery.locks[0].locktoken
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.http is not None:
+            self.http.doRequest('UNLOCK', self.url, hdrs={'Lock-Token': f'<{self.locktoken}>'})
 
 
 def resource_exists(http, path):
@@ -197,9 +211,6 @@ def resource_exists(http, path):
 
     return False
 
-class Lock:
-    def Lock(self):
-        a = 0
 
 class LockDiscovery:
     def __init__(self, lockdiscoveryStr):

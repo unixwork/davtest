@@ -39,17 +39,11 @@ class TestLock(davtest.test.WebdavTest):
         if res.status != 200:
             raise Exception(f'LOCK failed: {res.status}')
 
-        lockdiscovery = davtest.webdav.LockDiscovery(res.body)
-        locktoken = lockdiscovery.locks[0].locktoken
+        with davtest.webdav.Lock(self.http, '/webdavtests/lock2/res0', res.body) as lock:
+            res = self.http.doRequest('PUT', '/webdavtests/lock2/res0', 'new content', hdrs={'If': f'(<{lock.locktoken}>)'})
+            if res.status > 299:
+                raise Exception(f'PUT failed: {res.status}')
 
-        res = self.http.doRequest('PUT', '/webdavtests/lock2/res0', 'new content', hdrs={'If': f'(<{locktoken}>)'})
-        if res.status > 299:
-            self.http.doRequest('UNLOCK', '/webdavtests/lock3/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
-            raise Exception(f'PUT failed: {res.status}')
-
-        res = self.http.doRequest('UNLOCK', '/webdavtests/lock2/res0', hdrs={'Lock-Token': f'<{locktoken}>'})
-        if res.status >= 299:
-            raise Exception(f'UNLCOK failed: {res.status}')
 
     def test_lock_put_without_token(self):
         self.create_testdata('lock3', 1)
