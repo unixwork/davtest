@@ -55,7 +55,6 @@ class TestLock(davtest.test.WebdavTest):
         with davtest.webdav.Lock(self.http, '/webdavtests/lock3/res0', res.body) as lock:
             res = self.http.doRequest('PUT', '/webdavtests/lock3/res0', 'new content')
             if res.status < 400:
-                self.http.doRequest('UNLOCK', '/webdavtests/lock3/res0', hdrs={'Lock-Token': f'<{lock.locktoken}>'})
                 raise Exception(f'expected PUT to fail: {res.status}')
 
     def test_lock_create_res(self):
@@ -85,7 +84,6 @@ class TestLock(davtest.test.WebdavTest):
         self.create_testdata('lock5', 1)
 
         res = self.http.httpXmlRequest('LOCK', '/webdavtests/lock5/res0', lock_request1, hdrs={'Timeout': 'Second-10'})
-
         if res.status != 200:
             raise Exception(f'LOCK failed: {res.status}')
 
@@ -103,3 +101,16 @@ class TestLock(davtest.test.WebdavTest):
         res = self.http.doRequest('UNLOCK', '/webdavtests/lock5/res0', hdrs={'Lock-Token': f'<{newlocktoken}>'})
         if res.status >= 299:
             raise Exception(f'UNLCOK failed: {res.status}')
+
+    def test_lock_indirect(self):
+        self.create_testdata('lock6', 2)
+
+        res = self.http.httpXmlRequest('LOCK', '/webdavtests/lock6/', lock_request1, hdrs={'Timeout': 'Second-30'})
+        if res.status != 200:
+            raise Exception(f'LOCK failed: {res.status}')
+
+        # child resources should be locked, test put without locktoken
+        with davtest.webdav.Lock(self.http, '/webdavtests/lock6/', res.body) as lock:
+            res = self.http.doRequest('PUT', '/webdavtests/lock6/res0', 'new content')
+            if res.status < 400:
+                raise Exception(f'expected PUT to fail: {res.status}')
