@@ -11,6 +11,17 @@ lock_request1 = """<?xml version="1.0" encoding="utf-8" ?>
 </D:lockinfo>
 """
 
+ns = "https://unixwork.de/davtest/"
+
+proppatch2 = """<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:">
+    <D:set>
+        <D:prop>
+            <Z:myprop xmlns:Z="https://unixwork.de/davtest/">testvalue1</Z:myprop>
+        </D:prop>
+    </D:set>
+</D:propertyupdate>
+"""
 
 class TestLock(davtest.test.WebdavTest):
     def test_lock(self):
@@ -129,6 +140,27 @@ class TestLock(davtest.test.WebdavTest):
                 pass
             elif res.status < 400:
                 raise Exception(f'expected LOCK to fail: {res.status}')
+
+    def test_lock_proppatch_without_token(self):
+        self.create_testdata('lock8', 1)
+
+        res = self.http.httpXmlRequest('LOCK', '/webdavtests/lock8/res0', lock_request1, hdrs={'Timeout': 'Second-10'})
+        if res.status != 200:
+            raise Exception(f'LOCK failed: {res.status}')
+
+        with davtest.webdav.Lock(self.http, '/webdavtests/lock8/res0', res.body) as lock:
+            # expect this proppatch request to fail
+            # either directly with an error status code or with an error status code
+            # for the requested property
+            response = self.http.httpXmlRequest('PROPPATCH', '/webdavtests/lock8/res0', proppatch2)
+            if response.status == 423:
+                pass
+            elif response.status == 207:
+                ms = assertMultistatusResponse(response, numResponses=1)
+                assertProperty(ms.get_first_response(), 'ns', 'myprop', status=200)
+            else:
+                raise Exception(f'unexpected status code {response.status}')
+
 
 
 
