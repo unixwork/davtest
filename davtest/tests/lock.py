@@ -161,6 +161,28 @@ class TestLock(davtest.test.WebdavTest):
             else:
                 raise Exception(f'unexpected status code {response.status}')
 
+    def test_lock_copy_is_unlocked(self):
+        # copy a locked resource and check if the new copy is locked
+        #
+        # Section 7.6:
+        # A COPY method invocation MUST NOT duplicate any write locks active on
+        # the source
+        self.create_testdata('lock9', 1)
 
+        res = self.http.httpXmlRequest('LOCK', '/webdavtests/lock9/res0', lock_request1, hdrs={'Timeout': 'Second-10'})
+        if res.status != 200:
+            raise Exception(f'LOCK failed: {res.status}')
+
+        with davtest.webdav.Lock(self.http, '/webdavtests/lock9/res0', res.body) as lock:
+            destination = self.http.get_uri('/webdavtests/lock9/res0_copy')
+            res = self.http.doRequest('COPY', '/webdavtests/lock9/res0', hdrs={'Destination': destination})
+
+            if res.status > 299:
+                raise Exception(f'COPY status code: {res.status}')
+
+            # test if we can update the resource without locktoken
+            res = self.http.doRequest('PUT', '/webdavtests/lock9/res0_copy', 'new file content')
+            if res.status > 299:
+                raise Exception('failed to modify resource')
 
 
