@@ -185,4 +185,22 @@ class TestLock(davtest.test.WebdavTest):
             if res.status > 299:
                 raise Exception('failed to modify resource')
 
+    def test_lock_move(self):
+        self.create_testdata('lock10', 1)
+
+        res = self.http.httpXmlRequest('LOCK', '/webdavtests/lock10/res0', lock_request1, hdrs={'Timeout': 'Second-10'})
+        if res.status != 200:
+            raise Exception(f'LOCK failed: {res.status}')
+
+        with davtest.webdav.Lock(self.http, '/webdavtests/lock10/res0', res.body) as lock:
+            destination = self.http.get_uri('/webdavtests/lock10/res0_moved')
+            res = self.http.doRequest('MOVE', '/webdavtests/lock10/res0', hdrs={'Destination': destination})
+
+            if res.status > 299:
+                raise Exception(f'MOVE status code: {res.status}')
+
+            # test if we can update the resource without locktoken
+            res = self.http.doRequest('PUT', '/webdavtests/lock10/res0_moved', 'new file content')
+            if res.status > 299:
+                raise Exception('failed to modify resource')
 
