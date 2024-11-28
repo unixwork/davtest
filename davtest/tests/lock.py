@@ -204,3 +204,21 @@ class TestLock(davtest.test.WebdavTest):
             if res.status > 299:
                 raise Exception('failed to modify resource')
 
+    def test_lock_move_to_locked(self):
+        self.create_testdata('lock11', 1)
+        self.create_testdata('lock11_locked', 1)
+
+        res = self.http.httpXmlRequest('LOCK', '/webdavtests/lock11_locked/', lock_request1, hdrs={'Timeout': 'Second-10'})
+        if res.status != 200:
+            raise Exception(f'LOCK failed: {res.status}')
+
+        with davtest.webdav.Lock(self.http, '/webdavtests/lock11_locked', res.body) as lock:
+            destination = self.http.get_uri('/webdavtests/lock11_locked/res_new')
+            res = self.http.doRequest('MOVE', '/webdavtests/lock11/res0', hdrs={'Destination': destination, 'If': f'(<{lock.locktoken}>)'})
+
+            if res.status > 299:
+                raise Exception(f'MOVE status code: {res.status}')
+
+            res = self.http.doRequest('PUT', '/webdavtests/lock11/res_new', 'new content')
+            if res.status < 400:
+                raise Exception(f'expected PUT to fail: {res.status}')
