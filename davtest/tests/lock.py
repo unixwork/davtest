@@ -214,7 +214,8 @@ class TestLock(davtest.test.WebdavTest):
 
         with davtest.webdav.Lock(self.http, '/webdavtests/lock11_locked', res.body) as lock:
             destination = self.http.get_uri('/webdavtests/lock11_locked/res_new')
-            res = self.http.doRequest('MOVE', '/webdavtests/lock11/res0', hdrs={'Destination': destination, 'If': f'(<{lock.locktoken}>)'})
+            locktoken_uri = self.http.get_uri('/webdavtests/lock11_locked/')
+            res = self.http.doRequest('MOVE', '/webdavtests/lock11/res0', hdrs={'Destination': destination, 'If': f'<{locktoken_uri}> (<{lock.locktoken}>)'})
 
             if res.status > 299:
                 raise Exception(f'MOVE status code: {res.status}')
