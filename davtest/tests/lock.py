@@ -223,3 +223,20 @@ class TestLock(davtest.test.WebdavTest):
             res = self.http.doRequest('PUT', '/webdavtests/lock11/res_new', 'new content')
             if res.status < 400:
                 raise Exception(f'expected PUT to fail: {res.status}')
+
+    def test_lock_create_res_without_locktoken(self):
+        self.create_testdata('lock12', 1)
+
+        res = self.http.httpXmlRequest('LOCK', '/webdavtests/lock12/', lock_request1,
+                                       hdrs={'Timeout': 'Second-10'})
+        if res.status != 200:
+            raise Exception(f'LOCK failed: {res.status}')
+
+        with davtest.webdav.Lock(self.http, '/webdavtests/lock12/', res.body) as lock:
+            res = self.http.doRequest('PUT', '/webdavtests/lock12/res_new1', 'new content')
+            if res.status < 400:
+                raise Exception(f'expected PUT to fail: {res.status}')
+
+            res = self.http.doRequest('MKCOL', '/webdavtests/lock12/newcol2')
+            if res.status < 400:
+                raise Exception(f'expected MKCOL to fail: {res.status}')
