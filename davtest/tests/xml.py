@@ -33,6 +33,8 @@ import davtest.webdav
 from davtest.webdav import assertMultistatusResponse
 from davtest.webdav import assertProperty
 
+ns = "https://unixwork.de/davtest/"
+
 propfind_nstest1 = """<?xml version="1.0" encoding="UTF-8"?>
 <x0:propfind xmlns:x0="DAV:">
     <x0:prop>
@@ -42,19 +44,33 @@ propfind_nstest1 = """<?xml version="1.0" encoding="UTF-8"?>
 </x0:propfind>
 """
 
+proppatch_elmdecl1 = """<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:">
+    <D:set>
+        <D:prop>
+            <z:myprop xmlns:z="https://unixwork.de/davtest/"><z:elm1/><z:elm2/></z:myprop>
+        </D:prop>
+    </D:set>
+</D:propertyupdate>
+"""
+
+
+test1_propfind = """<?xml version="1.0" encoding="UTF-8"?>
+<D:propfind xmlns:D="DAV:">
+    <D:prop>
+        <z:myprop xmlns:z="https://unixwork.de/davtest/" />
+    </D:prop>
+</D:propfind>
+"""
+
 class TestXml(davtest.test.WebdavTest):
     def __init__(self):
         self.initialized = False
 
-    def initTestData(self):
-        if(self.initialized):
-            return
-        self.create_testdata('xml', 4)
-
     def test_xml_propfind_namespaces(self):
-        self.initTestData()
+        self.create_testdata('xml0', 1)
 
-        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/xml/res0', propfind_nstest1, 0), numResponses=1)
+        ms = assertMultistatusResponse(self.http.httpXmlRequest('PROPFIND', '/webdavtests/xml0/res0', propfind_nstest1, 0), numResponses=1)
         for key, response in ms.response.items():
             lastmodified = response.get_property('DAV:', 'getlastmodified')
             etag = response.get_property('DAV:', 'getetag')
@@ -62,6 +78,15 @@ class TestXml(davtest.test.WebdavTest):
             assertProperty(response, 'DAV:', 'getlastmodified', status=200)
             assertProperty(response, 'DAV:', 'getetag', status=200)
 
+    def test_xml_proppatch_elmdecl(self):
+        self.create_testdata('xml1', 1)
 
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPPATCH', '/webdavtests/xml1/res0', proppatch_elmdecl1), numResponses=1)
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
 
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPFIND', '/webdavtests/proppatch_set2/res0', test1_propfind, 0),
+            numResponses=1)
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
 
