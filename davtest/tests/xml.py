@@ -63,6 +63,15 @@ proppatch_globaldecl1 = """<?xml version="1.0" encoding="utf-8" ?>
     </D:set>
 </D:propertyupdate>
 """
+proppatch_mixdecl1 = """<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:" xmlns:z="https://unixwork.de/davtest/ns1">
+    <D:set>
+        <D:prop>
+            <a:myprop xmlns:a="https://unixwork.de/davtest/"><z:elm1/><z:elm2/></a:myprop>
+        </D:prop>
+    </D:set>
+</D:propertyupdate>
+"""
 
 
 test1_propfind = """<?xml version="1.0" encoding="UTF-8"?>
@@ -109,6 +118,18 @@ class TestXml(davtest.test.WebdavTest):
 
         ms = assertMultistatusResponse(
             self.http.httpXmlRequest('PROPFIND', '/webdavtests/xml2/res0', test1_propfind, 0),
+            numResponses=1)
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
+
+    def test_xml_mixdecl(self):
+        self.create_testdata('xml3', 1)
+
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPPATCH', '/webdavtests/xml3/res0', proppatch_mixdecl1), numResponses=1)
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
+
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPFIND', '/webdavtests/xml3/res0', test1_propfind, 0),
             numResponses=1)
         assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
 
