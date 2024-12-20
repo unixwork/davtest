@@ -130,6 +130,14 @@ class TestXml(davtest.test.WebdavTest):
             numResponses=1)
         assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
 
+        # check property content
+        response = ms.get_first_response()
+        myprop = response.get_property(ns, 'myprop')
+        for elm in myprop.elm.childNodes:
+            if elm.nodeType == elm.ELEMENT_NODE:
+                if elm.namespaceURI != ns:
+                    raise Exception('wrong namespace in property children')
+
     def test_xml_mixdecl(self):
         self.create_testdata('xml3', 1)
 
