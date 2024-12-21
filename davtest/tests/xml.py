@@ -34,6 +34,7 @@ from davtest.webdav import assertMultistatusResponse
 from davtest.webdav import assertProperty
 
 ns = "https://unixwork.de/davtest/"
+ns1 = "https://unixwork.de/davtest/ns1"
 
 propfind_nstest1 = """<?xml version="1.0" encoding="UTF-8"?>
 <x0:propfind xmlns:x0="DAV:">
@@ -149,4 +150,12 @@ class TestXml(davtest.test.WebdavTest):
             self.http.httpXmlRequest('PROPFIND', '/webdavtests/xml3/res0', test1_propfind, 0),
             numResponses=1)
         assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
+
+        # check property content
+        response = ms.get_first_response()
+        myprop = response.get_property(ns, 'myprop')
+        for elm in myprop.elm.childNodes:
+            if elm.nodeType == elm.ELEMENT_NODE:
+                if elm.namespaceURI != ns1:
+                    raise Exception('wrong namespace in property children')
 
