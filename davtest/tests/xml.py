@@ -74,6 +74,16 @@ proppatch_mixdecl1 = """<?xml version="1.0" encoding="utf-8" ?>
 </D:propertyupdate>
 """
 
+proppatch_childdecl1 = """<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:" xmlns:z="https://unixwork.de/davtest/">
+    <D:set>
+        <D:prop>
+            <z:myprop"><a:elm1 xmlns:a="https://unixwork.de/davtest/ns1"/></z:myprop>
+        </D:prop>
+    </D:set>
+</D:propertyupdate>
+"""
+
 
 test1_propfind = """<?xml version="1.0" encoding="UTF-8"?>
 <D:propfind xmlns:D="DAV:">
@@ -148,6 +158,26 @@ class TestXml(davtest.test.WebdavTest):
 
         ms = assertMultistatusResponse(
             self.http.httpXmlRequest('PROPFIND', '/webdavtests/xml3/res0', test1_propfind, 0),
+            numResponses=1)
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
+
+        # check property content
+        response = ms.get_first_response()
+        myprop = response.get_property(ns, 'myprop')
+        for elm in myprop.elm.childNodes:
+            if elm.nodeType == elm.ELEMENT_NODE:
+                if elm.namespaceURI != ns1:
+                    raise Exception('wrong namespace in property children')
+
+    def test_xml_childdecl(self):
+        self.create_testdata('xml4', 1)
+
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPPATCH', '/webdavtests/xml4/res0', proppatch_childdecl1), numResponses=1)
+        assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
+
+        ms = assertMultistatusResponse(
+            self.http.httpXmlRequest('PROPFIND', '/webdavtests/xml4/res0', test1_propfind, 0),
             numResponses=1)
         assertProperty(ms.get_first_response(), ns, 'myprop', status=200)
 
