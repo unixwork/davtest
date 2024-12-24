@@ -44,7 +44,7 @@ class Http:
         # get host and path from url
         url = urlparse(config['url'])
 
-        # make surewe have an http or https url
+        # make sure we have an http or https url
         if url.scheme != 'http' and url.scheme != 'https':
             print('Error: url scheme must be http or https')
             print('Abort.')
