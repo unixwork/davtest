@@ -29,6 +29,7 @@
 from base64 import b64encode
 from urllib.parse import urlparse
 import http.client
+import logging
 
 class HttpResponse:
     def __init__(self, status, header, body):

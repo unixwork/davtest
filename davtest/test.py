@@ -28,8 +28,11 @@
 
 import inspect
 import sys
+import http.client
+import logging
 
 from davtest.connection import Http
+import davtest.logging
 
 import davtest.basictests
 
@@ -37,6 +40,8 @@ test_classes = []
 
 
 def dav_testsuite_run(config):
+    davtest.logging.setup_logging()
+
     # create Http object for connection config
     http = Http(config)
 

@@ -32,6 +32,9 @@ import getopt
 import davtest.test
 import davtest.tests
 
+import http.client
+import logging
+
 # config
 #
 # url          base url for tests
