@@ -31,6 +31,7 @@ import xml.dom
 from urllib.parse import urlparse
 
 import davtest.connection
+import davtest.logging
 
 get_resource_req = """<?xml version="1.0" encoding="UTF-8"?>
 <D:propfind xmlns:D="DAV:">
