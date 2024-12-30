@@ -63,6 +63,7 @@ def dav_testsuite_run(config):
         for name, method in inspect.getmembers(test_cls, inspect.isfunction):
             if(name.startswith("test")):
                 print(name + " ... ", end="", file=sys.stderr)
+                test.http.requests.clear()
                 try:
                     test.error = None
                     test_method = getattr(test, name)

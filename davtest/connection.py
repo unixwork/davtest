@@ -56,6 +56,8 @@ class Http:
         self.host = url.netloc
         self.path = url.path or '/'
 
+        self.requests = []
+
     def getpath(self, p):
         return concatPath(self.path, p)
 
@@ -85,6 +87,7 @@ class Http:
         hdr.update({'Content-Type': ctype})
 
         conn.request(method, urlPath, xml, hdr)
+        self.requests.append(davtest.logging.get_request_data())
 
         return conn
 
@@ -114,6 +117,7 @@ class Http:
             conn.request(method, urlPath, headers=hdr)
         else:
             conn.request(method, urlPath, content, hdr)
+        self.requests.append(davtest.logging.get_request_data())
 
         return conn
 
@@ -134,6 +138,7 @@ class Http:
         urlPath = concatPath(self.path, path)
         conn, hdr = self.connection(urlPath)
         conn.request('MKCOL', urlPath, headers=hdr)
+        self.requests.append(davtest.logging.get_request_data())
         res = conn.getresponse()
         if not (200 <= res.status <= 299):
             print('failed, MKCOL %s : status = %d' % (urlPath, res.status))
@@ -144,6 +149,7 @@ class Http:
         urlPath = concatPath(self.path, path)
         conn, hdr = self.connection(urlPath)
         conn.request('PUT', urlPath, content, hdr)
+        self.requests.append(davtest.logging.get_request_data())
         res = conn.getresponse()
         if not (200 <= res.status <= 299):
             print('failed, PUT %s : status = %d' % (urlPath, res.status))
