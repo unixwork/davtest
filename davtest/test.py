@@ -54,6 +54,8 @@ def dav_testsuite_run(config):
 
     print("run test suite", file=sys.stderr)
 
+    testresults = []
+
     for test_cls in test_classes:
         test = test_cls()
         test.http = http
@@ -64,6 +66,7 @@ def dav_testsuite_run(config):
             if(name.startswith("test")):
                 print(name + " ... ", end="", file=sys.stderr)
                 test.http.requests.clear()
+                error = True
                 try:
                     test.error = None
                     test_method = getattr(test, name)
@@ -71,9 +74,18 @@ def dav_testsuite_run(config):
                     print("ok", file=sys.stderr)
                 except Exception as err:
                     print(err, file=sys.stderr)
+                    error = False
+
+                result = TestResult(error, test.http.requests)
+                testresults.append(result)
 
 
     return True
+
+class TestResult:
+    def __init__(self, result, requests):
+        self.result = result
+        self.requests = requests
 
 class WebdavTest:
     def __init_subclass__(cls, *args, **kwargs):
