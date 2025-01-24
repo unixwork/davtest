@@ -34,6 +34,9 @@ import logging
 from davtest.connection import Http
 import davtest.logging
 
+from davtest.webdav import assertMultistatusResponse
+from davtest.webdav import assertProperty
+
 import davtest.basictests
 
 test_classes = []
@@ -77,10 +80,46 @@ def dav_testsuite_run(config):
                     error = False
 
                 result = TestResult(error, test.http.requests)
+                result.name = name
                 testresults.append(result)
 
+    with OutputWriter("output.html") as output:
+        for result in testresults:
+            output.add_result(result)
 
     return True
+
+class OutputWriter:
+    def __init__(self, path):
+        self.file = open(path, "w")
+
+    def __enter__(self):
+        self.file.write("<html>\n")
+        self.file.write("<head>\n")
+        self.file.write("<title>davtest result</title>\n")
+        self.file.write("</head>\n")
+        self.file.write("<body>\n")
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        #self.file.write("</body>\n")
+        try:
+            self.file.write("</body>\n")
+        except Exception as err:
+            pass
+        self.file.close()
+
+    def add_result(self, result):
+        self.file.write("<div>\n")
+        self.file.write(f"<h3>{result.name}</h3>\n")
+        for req in result.requests:
+            self.file.write("<div class='result_request'>\n")
+            self.file.write("<pre>\n")
+            #self.file.write(req)
+            self.file.write("</pre>\n")
+            self.file.write("</div>\n")
+        self.file.write("</div>\n")
+
 
 class TestResult:
     def __init__(self, result, requests):
@@ -90,6 +129,27 @@ class TestResult:
 class WebdavTest:
     def __init_subclass__(cls, *args, **kwargs):
         test_classes.append(cls)
+
+    # Tests if the status code is the expected value
+    # If it is not the expected value, but in the nonerror range between
+    # nonerror_from and nonerror_to, no exception is thrown
+    def assert_statuscode(self, code, expected, nonerror_from=None, nonerror_to=None):
+        if code == expected:
+            return
+
+        if nonerror_from is not None and nonerror_to is not None:
+            if code >= nonerror_from and code <= nonerror_to:
+                # add status code warning
+                return
+
+        raise Exception(f'expected status code: {expected}')
+
+    def assert_resource_exists(self, path):
+        if not davtest.webdav.resource_exists(self.http, path):
+            raise Exception(f'expected resource does not exist: {path}')
+
+    def assert_property(response, ns, propname, content=None, status=None):
+        assertProperty(response, ns, propname, content, status)
 
     def create_testdata(self, colname, num_res):
         path = f'/webdavtests/{colname}/'
