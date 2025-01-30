@@ -115,8 +115,11 @@ class OutputWriter:
         for req in result.requests:
             self.file.write("<div class='result_request'>\n")
             self.file.write("<pre>\n")
-            #self.file.write(req)
+            self.file.write(req[0])
             self.file.write("</pre>\n")
+            self.file.write("<pre>\n")
+            self.file.write(req[1])
+            self.file.write("</pre><hr/>\n")
             self.file.write("</div>\n")
         self.file.write("</div>\n")
 
