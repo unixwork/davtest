@@ -112,7 +112,8 @@ class OutputWriter:
 
     def add_result(self, result):
         self.file.write("<div>\n")
-        self.file.write(f"<h3>{result.name}</h3>\n")
+        status = "ok" if result.result else "failed"
+        self.file.write(f"<h3>{result.name}: {status}</h3>\n")
         for req in result.requests:
             self.file.write("<div class='result_request'>\n")
             self.file.write("<pre>\n")
