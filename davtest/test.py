@@ -79,7 +79,7 @@ def dav_testsuite_run(config):
                     print(err, file=sys.stderr)
                     error = False
 
-                result = TestResult(error, test.http.requests)
+                result = TestResult(error, test.http.requests.copy())
                 result.name = name
                 testresults.append(result)
 
