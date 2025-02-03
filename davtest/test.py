@@ -71,6 +71,7 @@ def dav_testsuite_run(config):
                 print(name + " ... ", end="", file=sys.stderr)
                 test.http.requests.clear()
                 error = True
+                errorstr = ""
                 try:
                     test.error = None
                     test_method = getattr(test, name)
@@ -78,10 +79,12 @@ def dav_testsuite_run(config):
                     print("ok", file=sys.stderr)
                 except Exception as err:
                     print(err, file=sys.stderr)
+                    errorstr = err
                     error = False
 
                 result = TestResult(error, test.http.requests.copy())
                 result.name = name
+                result.error = errorstr
                 testresults.append(result)
 
     with OutputWriter("output.html") as output:
@@ -112,7 +115,7 @@ class OutputWriter:
 
     def add_result(self, result):
         self.file.write("<div>\n")
-        status = "ok" if result.result else "failed"
+        status = "ok" if result.result else result.error
         self.file.write(f"<h3>{result.name}: {status}</h3>\n")
         for req in result.requests:
             self.file.write("<div class='result_request'>\n")
