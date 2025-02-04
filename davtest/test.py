@@ -87,7 +87,11 @@ def dav_testsuite_run(config):
                 result.error = errorstr
                 testresults.append(result)
 
-    with OutputWriter("output.html") as output:
+    output_file = "testresults.html"
+    if 'output' in config:
+        output_file = config['output']
+
+    with OutputWriter(output_file) as output:
         for result in testresults:
             output.add_result(result)
 

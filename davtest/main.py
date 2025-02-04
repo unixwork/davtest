@@ -44,7 +44,7 @@ config = dict()
 
 # print help text
 def helptext():
-    print("Usage: davtest [-h] [-u <user>] [-p <password>] [-c <configfile>] <url>")
+    print("Usage: davtest [-h] [-u <user>] [-p <password>] [-c <configfile>] [-o <file>] <url>")
 
 def main():
     # load config parameters from a file
@@ -73,6 +73,8 @@ def main():
             config.update(password=v)
         elif o == '-c':
             loadconfig(config, v)
+        elif o == '-o':
+            config.update(output=v)
 
     # check config
     err = False
