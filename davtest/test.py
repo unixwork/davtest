@@ -60,6 +60,10 @@ def dav_testsuite_run(config):
 
     testresults = []
 
+    numtests = 0
+    numtestsok = 0
+    numtestserr = 0
+
     for test_cls in test_classes:
         test = test_cls()
         test.http = http
@@ -69,6 +73,7 @@ def dav_testsuite_run(config):
         for name, method in inspect.getmembers(test_cls, inspect.isfunction):
             if(name.startswith("test")):
                 print(name + " ... ", end="", file=sys.stderr)
+                numtests += 1
                 test.http.requests.clear()
                 error = True
                 errorstr = ""
@@ -77,15 +82,19 @@ def dav_testsuite_run(config):
                     test_method = getattr(test, name)
                     test_method()
                     print("ok", file=sys.stderr)
+                    numtestsok += 1
                 except Exception as err:
                     print(err, file=sys.stderr)
                     errorstr = err
                     error = False
+                    numtestserr += 1
 
                 result = TestResult(error, test.http.requests.copy())
                 result.name = name
                 result.error = errorstr
                 testresults.append(result)
+
+    print(f"\nTotal: {numtests}\nSuccess: {numtestsok}\nFailure: {numtestserr}", file=sys.stderr)
 
     output_file = "testresults.html"
     if 'output' in config:
