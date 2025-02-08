@@ -101,6 +101,9 @@ def dav_testsuite_run(config):
         output_file = config['output']
 
     with OutputWriter(output_file) as output:
+        output.file.write("<div>\n")
+        output.file.write(f"<p>Total: {numtests}</p>\n<p>Success: {numtestsok}</p>\n<p>Failure: {numtestserr}</p>\n")
+        output.file.write("</div>\n")
         for result in testresults:
             output.add_result(result)
 
