@@ -10,7 +10,12 @@ def capture_http(*args):
     global response_buf
     unescaped = codecs.decode(args[1], 'unicode_escape')
     if args[0] == 'send:':
-        request_buf += unescaped[2:-1]
+        send = unescaped[2:-1]
+        lines = send.splitlines()
+        #request_buf += send
+        for line in lines:
+            if not line.lower().startswith('authorization'):
+                request_buf += line + '\n'
     elif args[0] == 'reply:':
         response_buf += unescaped[1:-1]
     else:
